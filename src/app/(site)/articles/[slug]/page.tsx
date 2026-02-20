@@ -13,7 +13,6 @@ const categoryLabels: Record<string, string> = {
   tech: "Tech & AI",
   business: "Business",
   philosophy: "Philosophy",
-  "building-in-public": "Building in Public",
 };
 
 export async function generateStaticParams() {

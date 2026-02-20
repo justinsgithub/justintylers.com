@@ -11,7 +11,6 @@ const categories = [
   { value: "tech", label: "Tech & AI" },
   { value: "business", label: "Business" },
   { value: "philosophy", label: "Philosophy" },
-  { value: "building-in-public", label: "Building in Public" },
 ];
 
 export function ArticlesList({ articles }: { articles: ArticleMeta[] }) {
