@@ -1,0 +1,112 @@
+---
+title: "How I Integrated Every Google Service Into My AI Assistant"
+description: "One CLI tool replaced all my custom OAuth scripts and gave Tyler access to Calendar, Tasks, Gmail, Contacts, and Drive."
+publishedAt: "2026-02-20"
+category: "tech"
+tags: ["google", "calendar", "tasks", "gmail", "automation"]
+featured: false
+draft: false
+---
+
+I tried the hard way first.
+
+Custom OAuth scripts. Manual token refresh. Separate authentication flows for Calendar, Tasks, Gmail. Each one its own little nightmare of expired tokens and broken flows. I had a `gcal.ts` and a `gcal-auth.ts` that worked great until they didn't, and then I'd spend an hour debugging token state instead of building things.
+
+Then I found `gog`.
+
+## One CLI to Rule Them All
+
+`gog` is a CLI tool that handles authentication for every Google service through a single token store. Calendar, Tasks, Gmail, Contacts, Drive. One binary, one auth flow, one place tokens live.
+
+Every command takes the same account flag:
+
+```bash
+gog cal events justinaawd@gmail.com -a justinaawd@gmail.com --today
+gog tasks list LIST_ID -a justinaawd@gmail.com
+gog gmail search "from:someone@email.com" -a justinaawd@gmail.com
+gog contacts search "John" -a justinaawd@gmail.com
+gog drive search "budget" -a justinaawd@gmail.com
+```
+
+That's it. No OAuth dance. No refresh token logic. No custom middleware. The `-j` flag gives you JSON output for scripting, `-p` gives you TSV for parsing. Tyler can call any of these and get structured data back.
+
+The day I deleted my custom OAuth scripts was a good day.
+
+## How Tyler Uses Google Calendar
+
+Calendar is how Tyler knows what my day looks like. The morning briefing cron job (8am daily) pulls today's events and factors them into recommendations. If I have a meeting at 10am, Tyler knows not to suggest a gym session at 9:30.
+
+```bash
+# Today's events
+gog cal events justinaawd@gmail.com -a justinaawd@gmail.com --today
+
+# This week
+gog cal events justinaawd@gmail.com -a justinaawd@gmail.com --week
+
+# Create an event
+gog cal create justinaawd@gmail.com -a justinaawd@gmail.com \
+  --title "Dentist" \
+  --from "2026-03-01T14:00:00" \
+  --to "2026-03-01T15:00:00"
+```
+
+I have multiple calendars synced: my primary, a family calendar, work shifts, and a Lunch Money calendar that tracks recurring bills and income. Tyler can see across all of them.
+
+One gotcha that cost me time: `gog cal events --today` without a calendar ID as the first positional argument returns a 404. Always pass the calendar ID first, then flags. Also, "primary" doesn't work as a calendar ID. You need the actual email address.
+
+## Google Tasks: The Input Layer
+
+This is where things get interesting. Google Tasks became the bridge between my phone and Tyler.
+
+The setup is simple. I have a Google Tasks list called "Tyler." When I want Tyler to do something, I add a task to that list on my phone. Tyler checks it, processes it, and marks it done.
+
+The most common use cases: food logging and workout tracking. I'll be at dinner and add a task titled "Food 7pm" with notes listing what I ate. Or after a gym session, I add "Workout complete" with my exercises. Tyler picks these up, parses them, and logs the data to LifeDirector.
+
+The `gtasks.ts` script is the engine:
+
+```bash
+# See what's pending
+bun gtasks.ts --list
+
+# Get food tasks as structured JSON
+bun gtasks.ts --food-json
+
+# Get workout tasks as structured JSON
+bun gtasks.ts --workout-json
+
+# Mark a task done after processing
+bun gtasks.ts --mark-done TASK_ID
+```
+
+The script calls `gog` under the hood to fetch tasks, then does all the parsing. Food tasks get matched against a USDA database and a personal pantry. Workout tasks get parsed into structured exercise data. Both get logged to LifeDirector with proper timestamps.
+
+The key insight: Google Tasks is available on every phone, works offline, and syncs instantly. No custom app needed. No API to build. I just type what I ate in the notes field and Tyler handles the rest.
+
+## Gmail for Notifications
+
+Tyler can search my email and send messages through Gmail. This is mostly used for notifications back to me. When Tyler finishes a long task, hits a blocker, or makes a git commit while I'm away, it sends me an email summary.
+
+```bash
+gog gmail send -a justinaawd@gmail.com \
+  --to "justinaawd@gmail.com" \
+  --subject "[project] Task complete" \
+  --body "Here's what happened..."
+```
+
+## Contacts and Drive
+
+Google Contacts gives Tyler access to my address book for relationship management. When someone comes up in conversation, Tyler can look them up, cross-reference with the relationship files it maintains, and give me context.
+
+Drive is there when needed. File search, downloads, browsing. Not used daily, but useful when I need to find something in my Google ecosystem without leaving the terminal.
+
+## Why This Architecture Works
+
+The pattern is: use existing tools where they're good, build custom where they're not.
+
+Google is good at calendars, task lists, email, contacts, and file storage. They've been doing it for decades. Building my own versions of any of these would be months of work for an inferior result.
+
+What Google is not good at is tying all of this together into a coherent life management system. That's what Tyler and LifeDirector do. They sit on top of Google's services and add the intelligence layer.
+
+The `gog` CLI is the glue. One tool, consistent interface, every Google service. Tyler calls it, gets data, does something smart with it, and calls it again to take action. No custom APIs, no token management, no maintenance burden.
+
+Sometimes the best code is the code you delete.

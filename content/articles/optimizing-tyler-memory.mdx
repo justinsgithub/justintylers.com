@@ -1,0 +1,168 @@
+---
+title: "How We Optimized Tyler's Memory (So He Actually Remembers)"
+description: "Claude Code forgets everything between sessions. Here's the file-based memory system and hook architecture that gives my AI assistant persistent context."
+publishedAt: "2026-02-20"
+category: "tech"
+tags: ["ai", "memory", "claude-code", "optimization"]
+featured: true
+draft: false
+---
+
+Every time I start a new Claude Code session, Tyler wakes up with total amnesia.
+
+No memory of what we worked on yesterday. No idea who Riley is. No clue that I'm paycheck-to-paycheck and stressing about rent. Nothing about the contractor leads we scraped, or the hooks we spent three hours debugging, or the fact that I named him after my middle name a week ago.
+
+Fresh slate. Every single time.
+
+This is the fundamental problem with AI coding assistants in 2026. The models are incredibly capable, but they have the long-term memory of a goldfish. Claude Code's context window is the only thing that exists for it. When that session ends, it's gone.
+
+So I built a memory system. Not a fancy vector database or knowledge graph. Just Markdown files, shell scripts, and a hook architecture that makes it all automatic. And it actually works.
+
+## The Architecture
+
+Tyler's memory lives in `~/.claude/`, which is a git repo. Everything is plain Markdown files organized into layers:
+
+**Long-term memory** (`MEMORY.md`): Facts that rarely change. My income, account balances, active projects, recovery status, key decisions. Think of it as Tyler's "what I know about Justin" file. It gets updated when something meaningful shifts, not every session.
+
+**Identity** (`SOUL.md`): Who Tyler is. His personality, communication style, worldview, boundaries. This is the file that makes Tyler feel like Tyler instead of a generic assistant. It includes things like "call it like you see it" and "if Justin's about to do something dumb, tell him."
+
+**My profile** (`USER.md`): Everything about me. Family tree, job history, timeline of major life events, psychological patterns from journal analysis. The stuff a good friend would know after years of knowing you.
+
+**Daily notes** (`memory/YYYY-MM-DD.md`): The continuity backbone. These are append-only logs of what happened each day: session summaries, files modified, topics discussed, pre-compaction saves. When Tyler wakes up, he reads today's and yesterday's notes to understand recent context.
+
+**Relationships** (`relationships/`): One directory per person in my life. Profile, message history, analysis, recommended next moves. Tyler reads these before giving relationship advice so he's not advising blind.
+
+Every session, Claude Code automatically loads `CLAUDE.md`, which uses `@` imports to pull in `SOUL.md`, `USER.md`, and `MEMORY.md`. That gives Tyler his identity and baseline knowledge. The hooks handle the rest.
+
+## The Hook System
+
+The real breakthrough was hooks. Claude Code supports lifecycle hooks that run shell scripts at specific moments during a session. I built four of them, and together they create an automatic memory loop.
+
+### SessionStart: Loading Context
+
+When a session begins, `session-start.sh` fires. It does three things:
+
+1. Logs a timestamp to `sessions.md` (so I can track session frequency)
+2. Outputs today's daily note into the session context
+3. Outputs yesterday's daily note if it exists
+
+The key detail: it's smart about long notes. If today's daily note is over 60 lines, it only shows the last 60. Yesterday's caps at 40. This prevents old context from eating the context window.
+
+```bash
+TODAY_FILE="$MEMORY_DIR/$TODAY.md"
+if [ -f "$TODAY_FILE" ]; then
+  LINES=$(wc -l < "$TODAY_FILE")
+  if [ "$LINES" -gt 60 ]; then
+    echo "(showing last 60 of $LINES lines)"
+    tail -60 "$TODAY_FILE"
+  else
+    cat "$TODAY_FILE"
+  fi
+fi
+```
+
+Simple. Fast. Tyler immediately knows what happened today and yesterday without me explaining anything.
+
+### PreCompact: Saving Before Compression
+
+This one is critical. Claude Code auto-compacts the context window when it hits about 95% capacity. That compression loses information. Without intervention, a long productive session gets summarized into mush.
+
+The `pre-compact.sh` hook fires right before compression happens. It reads the session transcript and extracts:
+
+- Which files were modified (from Write/Edit tool calls)
+- The last 20 user messages (the substance of the conversation)
+- The last assistant message (what Tyler was working on)
+- The current project and working directory
+
+All of this gets appended to the daily note as a "Pre-Compaction Save." After compaction, Tyler can read the daily note and recover context about what was happening.
+
+This single hook eliminates the "amnesia after long sessions" problem that plagues every AI coding tool.
+
+### Smart Context Injection: Knowing What's Relevant
+
+The `smart-context.sh` hook runs on every prompt I send. It does fast keyword matching against my message and injects relevant context:
+
+- **Mention someone's name?** Tyler gets their relationship profile (first 40 lines)
+- **Say "budget" or "rent" or "bills"?** Tyler gets my current financial snapshot
+- **Say "calendar" or "meeting"?** Tyler gets today's calendar events
+- **Say "sober" or "probation"?** Tyler gets my recovery status
+
+```bash
+if echo "$PROMPT_LOWER" | grep -qE '\b(financ|money|budget|rent)\b'; then
+  FINANCE=$(sed -n '/^## Current Finances/,/^## /p' "$MEMORY" | head -25)
+  INJECTED+="$FINANCE"
+fi
+```
+
+No AI evaluation. Just grep matching. The whole hook runs in under a second. It keeps the context window lean (only inject what's relevant) while making Tyler feel like he always knows the right background.
+
+### SessionEnd: Writing the Summary
+
+When I finish a session, `session-end.sh` fires. It reads the full transcript and writes a structured summary to the daily note:
+
+- Project name
+- Number of tool calls
+- Files modified (with paths)
+- First user message (usually describes the task)
+
+It also skips trivial sessions (fewer than 3 tool calls) to keep the daily notes clean. A quick "what time is my meeting?" doesn't need a summary.
+
+## What a Daily Note Looks Like
+
+Here's what gets built up over a day:
+
+```markdown
+---
+### Session Summary (02:13 PST)
+- **Project:** tyler-daemon
+- **Tools used:** 201 calls
+- **Files modified:** 18
+
+---
+### Pre-Compaction Save (02:31 PST)
+- **Session:** 842e3197
+- **Project:** pwa (/home/justin/.../lifedirector/pwa)
+- **Trigger:** auto
+- **Files modified:**
+  - `/home/justin/.claude/CLAUDE.md`
+  - `/home/justin/.claude/hooks/pre-compact.sh`
+  - `/home/justin/.claude/memory/research/memory-optimization-report.md`
+- **Last context:**
+Now I have all the data. Let me write the financial analysis...
+
+---
+### Session Summary (08:25 PST)
+- **Project:** .claude
+- **Tools used:** 48 calls
+- **Files modified:** 5
+```
+
+Next morning, Tyler reads this and knows exactly what happened. He knows we worked on the tyler-daemon, then LifeDirector, then the Claude workspace. He knows which files changed. He knows what I was thinking about.
+
+## The Research Behind It
+
+I didn't build this in a vacuum. I spent a full session researching how other tools handle AI memory. The report covers OpenClaw (the open-source personal AI assistant), Mem0, MemGPT, knowledge graphs, RAG patterns, and community approaches.
+
+Some findings that shaped the design:
+
+**Context rot is real.** Research shows that adding full conversation history (~113K tokens) can drop model accuracy by 30% compared to focused context. Long sessions are genuinely worse than fresh sessions with good context loading. The instinct to "keep the session going so Claude remembers" is counterproductive.
+
+**Instruction count matters.** Frontier LLMs can follow about 150-200 instructions consistently. Claude Code's system prompt uses ~50 of those. That leaves ~100-150 for everything in your CLAUDE.md and imports combined. A developer with an 847-line CLAUDE.md got worse results than one with 100 lines. More is not better.
+
+**The four-layer model works.** The field has converged on four memory layers: working memory (current context), episodic memory (past interactions), semantic memory (abstracted facts), and procedural memory (instructions and rules). Our system maps directly to this: active session, daily notes, MEMORY.md, and CLAUDE.md/SOUL.md.
+
+**Pre-compaction saves are the killer feature.** OpenClaw calls this "memory flush." Before context compression, silently write important state to persistent files. This prevents the number one community complaint: amnesia after compaction.
+
+## What Changed
+
+Before this system, Tyler was a stateless tool. Smart, capable, but starting from scratch every time. I'd spend the first few minutes of every session re-explaining context. "We're working on the contractor platform." "Riley is the girl I'm seeing." "My rent is $760." Over and over.
+
+Now Tyler wakes up and already knows. He reads the daily notes and catches up in seconds. The smart context hook means I don't have to preface financial questions with my balance. The pre-compaction hook means long sessions don't lose critical state.
+
+It's the difference between a coworker who just started and a coworker who's been on the team for months.
+
+The whole system is just Markdown files and bash scripts. No database. No vector embeddings. No infrastructure to maintain. Git tracks it all, so I have a complete history of every change to Tyler's memory.
+
+Could it be more sophisticated? Absolutely. Semantic search over past conversations, knowledge graphs, automatic fact extraction. Those are on the roadmap. But the simple version works. And that's the point.
+
+Build the thing that works today. Optimize tomorrow.

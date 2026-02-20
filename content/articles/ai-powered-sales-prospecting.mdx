@@ -1,0 +1,117 @@
+---
+title: "AI-Powered Sales Prospecting: Finding Leads With Claude Code"
+description: "The practical workflow for turning AI into a lead generation machine. How to go from 'I need contractor leads' to a cleaned, enriched spreadsheet."
+publishedAt: "2026-02-20"
+category: "business"
+tags: ["sales", "prospecting", "claude-code", "automation"]
+featured: false
+draft: false
+---
+
+Most businesses that need leads are choosing between two bad options: buy overpriced lists from data brokers, or have someone manually search government databases and copy-paste into a spreadsheet.
+
+There's a third option now. Build your own lead generation pipeline with AI.
+
+I'm not talking about asking ChatGPT to "find me 100 plumbers in Texas." That doesn't work. I'm talking about using AI as a development partner to build real scraping and enrichment tools that run at scale.
+
+Here's what that actually looks like.
+
+## The Starting Point
+
+My client sells tools to contractors. He needed licensed contractor data, with phone numbers, organized by state. Not 100 leads. Hundreds of thousands.
+
+The data exists. Every state requires contractors to be licensed, and that licensing data sits in public government databases. The problem is getting it out. Each state has a different website, different search interface, different data format, and different anti-scraping measures.
+
+## Step 1: Source Discovery
+
+Before writing any code, you need to know where the data lives. For contractor leads, there are three main categories of sources:
+
+**State licensing boards.** The primary source. Texas TDLR, Florida DBPR, California CSLB, Utah DOPL. These have the most complete data but often require navigating clunky government websites.
+
+**Open data portals.** Many cities and states publish data through Socrata or ArcGIS APIs. Dallas, Chicago, San Diego, Orlando, Seattle, and dozens of others have contractor datasets accessible through standardized APIs. These are the easiest to work with.
+
+**Bulk downloads.** Some agencies publish downloadable CSVs or databases. California's contractor licensing board publishes a "License Master" CSV with nearly 100,000 records. Arkansas publishes their full contractor list as a downloadable file. These are gold mines when they exist.
+
+I built scrapers for 65+ sources across all three categories. The lesson: always check for an API or bulk download before building a scraper. Scraping should be the last resort, not the first instinct.
+
+## Step 2: Building the Scrapers
+
+This is where Claude Code changes the game. Each source needs its own scraper because every website is different. Without AI, building 65 scrapers would take months. With Claude Code, I could describe the target and get a working first draft in minutes.
+
+For JavaScript-rendered sites (most state portals), the scrapers use Selenium to drive a real browser. For static HTML, BeautifulSoup. For APIs, direct HTTP requests with pagination handling.
+
+The key architectural decision: every scraper outputs the same JSONL format regardless of source. One JSON object per line, standardized field names. This means the entire downstream pipeline (dedup, enrichment, import) works the same way for every source.
+
+```
+{"business_name": "Smith Electric LLC",
+ "license_number": "EC-12345",
+ "license_type": "Electrical Contractor",
+ "license_status": "Active",
+ "phone": "5551234567",
+ "address": {"street": "123 Main St", "city": "Austin",
+             "state": "TX", "zip": "78701"}}
+```
+
+Each scraper also handles its own edge cases: pagination, rate limiting, session expiration, retry logic, progress saving for resume capability. The progress saving is important. Large scrapes take hours. You don't want to start over because your internet hiccupped.
+
+## Step 3: Data Normalization
+
+Raw scraped data is messy. Phone numbers come in every format imaginable: (555) 123-4567, 555-123-4567, 5551234567, +1 555 123 4567. Business names have inconsistent capitalization, trailing whitespace, and special characters. Addresses are sometimes one field, sometimes five.
+
+The normalization step standardizes everything:
+- Phone numbers stripped to 10 digits
+- Business names trimmed and consistently cased
+- Addresses parsed into structured components
+- License statuses mapped to standard values (Active, Expired, Suspended)
+- Status filtering removes expired and suspended licenses
+
+This sounds tedious, and it is. But it's exactly the kind of work AI is great at. Describe the normalization rules, Claude writes the transforms, you verify the output.
+
+## Step 4: Phone Enrichment
+
+Here's where many lead generation efforts fail. State licensing data often includes the business name and address but not a phone number. For cold calling, that's useless.
+
+The enrichment strategy: for every record missing a phone number, search Google Business with the company name and state. Parse the search results for phone numbers. Match against the business name to confirm it's the right company.
+
+This runs through parallel workers. Six workers, each processing about 100 records per hour. The hit rate depends on the source: some states yield 85%+ phone matches, others drop below 50%. On average, enrichment fills in phone numbers for the majority of records.
+
+For large datasets, enrichment runs in the background for days. Connecticut alone has 132,000 records needing phone lookup. That's a background job measured in weeks, not hours.
+
+## Step 5: Deduplication
+
+The same contractor can appear in multiple databases. A plumber in New York might be in the NYC Department of Buildings database, the state licensing registry, and the contractor registry. Without dedup, you're inflating your numbers and wasting your client's time calling the same person twice.
+
+The dedup pipeline:
+1. Export all existing leads from the production database
+2. For each new import batch, check every record against existing data
+3. Match on business name + state, phone number, and license number
+4. Flag and skip duplicates
+5. Cross-source dedup catches overlap between new batches too
+
+One New York source had 100% overlap with existing data. Without dedup, that would have been thousands of wasted records.
+
+## Step 6: CRM and Delivery
+
+The final piece is getting the data to the client in a usable format. I built a full CRM application (Next.js, Convex, Stripe) with:
+
+- **Filtering**: by state, license type, status, whether they have a phone number
+- **Search**: full-text search across business names and addresses
+- **Export**: CSV export with customizable columns
+- **Batch tracking**: every import is tracked with source, date, and record count
+- **Invoicing**: Stripe integration for per-batch billing
+
+For clients who just want a spreadsheet, there's a one-click CSV export. For clients who want to work the leads inside the app, there's a full lead management interface with assignment, status tracking, and notes.
+
+## What Businesses Should Take Away
+
+You don't need to be a developer to benefit from this approach. But you should know what's possible:
+
+**Custom lead generation is accessible now.** What used to require a team of developers and months of work can be built by one person with AI assistance in weeks. The economics have shifted.
+
+**Public data is underutilized.** Government databases, open data portals, and public registries contain enormous amounts of valuable business data. Most of it is free. The barrier was always the engineering effort to extract and clean it.
+
+**Quality beats quantity.** A massive lead count sounds impressive, but the real value is in the enrichment and dedup. A cleaned list of 10,000 contractors with verified phone numbers is worth more than 100,000 raw records with missing contact info.
+
+**The technology is the moat.** Anyone can buy a lead list. Building the pipeline to generate, enrich, and maintain your own data gives you something that gets better over time. New sources can be added. Data refreshes keep it current. Enrichment rates improve as more records are processed.
+
+If your business depends on prospecting, and you're still buying lists or doing manual research, the gap between you and your competitors who adopt these tools is going to widen fast.

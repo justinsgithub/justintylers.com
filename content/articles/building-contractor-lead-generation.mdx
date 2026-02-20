@@ -1,0 +1,86 @@
+---
+title: "How I Used AI to Find 1.4M Leads"
+description: "How I built a full contractor lead generation platform using Claude Code as a solo developer. Custom scraping, data enrichment, and a CRM dashboard."
+publishedAt: "2026-02-20"
+category: "business"
+tags: ["lead-generation", "web-scraping", "ai", "contractors"]
+featured: true
+draft: false
+---
+
+A client came to me with a simple problem: he sells tools to contractors and needed leads to cold call. Not the junk leads you buy from data brokers. Real, licensed contractors with verified phone numbers, organized by state and trade.
+
+That conversation turned into a full lead generation platform with a CRM for managing and selling those leads.
+
+I built it solo. The secret weapon was Claude Code.
+
+## What the Platform Does
+
+The concept is straightforward. Every state requires contractors to get licensed. That licensing data, business name, license type, address, sometimes phone and email, lives in state government databases. Most of these databases are publicly accessible.
+
+The platform scrapes that data, cleans it, enriches it with phone numbers when they're missing, and provides a CRM where my client can manage, filter, and export leads for his sales team.
+
+The workflow:
+
+1. Python scrapers collect data from state licensing websites
+2. Data gets normalized into a standard format (every state's data looks different)
+3. Phone enrichment fills in missing contact info via Google Business Search
+4. Cleaned data imports into a Convex database
+5. The CRM frontend lets users filter, search, assign, and export leads
+6. Stripe handles invoicing per batch
+
+## The Technical Challenges
+
+### Every State Is Different
+
+This was the hardest part. There's no standard format for contractor licensing data. Texas organizes by county. Florida organizes by license category. New York City has three separate databases (Department of Buildings, Consumer Affairs, DOB licenses). North Carolina's search requires querying all 855 zip codes with a 2-mile radius.
+
+Some states use modern APIs (Socrata, ArcGIS). Some have 1990s-era ASP.NET forms with server-side pagination. Some offer bulk CSV downloads. Some have CAPTCHA protection.
+
+Each source needed its own scraper with its own logic, but all outputting to the same JSONL format for the import pipeline.
+
+### Anti-Scraping Measures
+
+Some sites actively detect and block scrapers. The solution was VPN rotation, cycling IP addresses to avoid detection. Rate limiting was critical. Hit a site too fast and you're blocked. Too slow and the scrape takes weeks.
+
+For JavaScript-rendered sites (most state licensing portals), I used Selenium to run a real browser. BeautifulSoup handled the simpler static HTML sites. Some sources needed both: Selenium to navigate through search forms, then BeautifulSoup to parse the results.
+
+### Phone Enrichment
+
+The data from state licensing boards often includes business name and address but not phone numbers. That's a problem when your client needs phone numbers for cold calls.
+
+The solution: Google Business Search. For each business, query Google with the business name and state, parse the results for phone numbers. This runs through parallel workers with multiple workers running simultaneously.
+
+The hit rate varies wildly by source. Some states had nearly complete phone matches. Others dropped below 50%. Some enrichment jobs are massive and run for days in the background.
+
+### Cross-Source Deduplication
+
+The same contractor can appear in multiple databases. A general contractor in New York might show up in the NYC Department of Buildings, the NY Department of State, and the NY Contractor Registry. Importing duplicates wastes storage and makes the data less useful.
+
+The dedup pipeline exports all current leads from the production database, then checks each new import against existing records. Business name, address, and phone number are all used as matching signals.
+
+## How Claude Code Made This Possible
+
+Building dozens of scrapers for different state websites, each with unique data formats, anti-scraping measures, and edge cases, would normally require a team. Or months of solo work.
+
+With Claude Code, I'd describe what I needed: "Scrape Florida's licensing portal. It uses JavaScript rendering. I need business name, license type, license number, address, phone, and email. Data is organized by county and license category."
+
+Claude would write the scraper, handle the pagination, build the data normalization, and create the import script. I'd test it, fix edge cases, and move on to the next state.
+
+The CRM itself is a full Next.js application with Convex for the real-time backend, Clerk for auth, Stripe for invoicing, and role-based access control for admin, manager, and sales roles. That's a lot of moving parts for a solo developer. Claude Code handled the boilerplate while I focused on the business logic and data quality.
+
+## The Business Model
+
+My client pays per lead batch. He requests leads for specific states and trade categories, I scrape and enrich the data, export to CSV, and invoice through Stripe.
+
+The potential is bigger than one client. The same data and infrastructure could power a SaaS product, API access for CRM integrations, automated monthly refreshes, or lead scoring.
+
+Right now it's a service. The bones for a product are already there.
+
+## What It Demonstrates
+
+This project is the proof that a solo developer with AI tooling can build things that previously required a team. Not a prototype. Not a demo. A production system processing real data at real scale for a real client.
+
+The tech stack is modern (Next.js, Convex, TypeScript, Python, Selenium). The data pipeline is robust (deduplication, enrichment, validation, batch tracking). The business is real.
+
+One person. One AI assistant. A whole lot of contractor leads.

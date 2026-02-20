@@ -1,0 +1,94 @@
+---
+title: "How Tyler Manages My Money: Lunch Money + LifeDirector Integration"
+description: "Pulling transactions, tracking recurring bills, and auto-injecting financial context so Tyler always knows my money situation."
+publishedAt: "2026-02-20"
+category: "tech"
+tags: ["finance", "lunch-money", "google-calendar", "automation"]
+featured: false
+draft: false
+---
+
+Money stress is my biggest pain point. Paycheck to paycheck, multiple jobs, rent due on the 5th. The last thing I need is to manually review transactions or wonder if I can afford something.
+
+So I wired Tyler into my finances. Now when I ask "can I afford to go out tonight?" Tyler doesn't guess. He checks.
+
+## The Stack
+
+The financial data flows through three layers:
+
+1. **Lunch Money** is the source of truth. It's a personal finance app with a solid API. My bank accounts (Capital One 360 Checking, Bank of America Advantage Plus) and credit card (Capital One Platinum) sync automatically. Transactions categorize themselves. Recurring bills get detected.
+
+2. **LifeDirector** pulls from Lunch Money and exposes the data through Tyler API endpoints. This is where the data becomes queryable by Tyler.
+
+3. **Tyler** queries LifeDirector, analyzes the data, and provides insights both on-demand and proactively.
+
+## The Endpoints
+
+Tyler has a few key financial endpoints to work with.
+
+**`/tyler/financial-snapshot`** returns the big picture: account balances, net worth, and summaries of recurring expenses and income. When Tyler does the weekly summary, this is the first thing he pulls.
+
+**`/tyler/transactions`** is the detailed view. It accepts date range filters and a status filter (reviewed/unreviewed). Each transaction comes back with the payee, amount in cents (positive for expenses, negative for income), category, account name, and review status.
+
+**`/tyler/recurring`** lists all detected recurring items: bills, subscriptions, income. Each entry has the payee, amount, cadence (monthly, weekly, every 2 weeks), next billing date, and whether it's an expense or income.
+
+**`/tyler/update-transaction`** lets Tyler review transactions, recategorize them, or add notes. If I say "that $15 charge at Amazon was for supplements," Tyler can update the category to Pharmacy & Supplements and mark it reviewed.
+
+## Smart Context Injection
+
+Here's the part that makes this feel seamless rather than manual.
+
+One of Tyler's hooks, the smart-context hook, runs on every message I send. It scans for financial keywords: money, budget, rent, paycheck, income, expense, bank, saving, afford, bills, broke. If any of those words appear, it extracts the Current Finances section from my memory file and injects it as context.
+
+That means when I type "I'm worried about making rent this month," Tyler instantly has:
+- My income breakdown ($2,100/mo from Slick Rock, $450/mo from Drummin Up BBQ)
+- My fixed expenses ($760 rent, ~$680/mo probation classes, ~$326 subscriptions)
+- My current account balances
+- Month-to-date income vs. expenses
+
+No "let me check your finances." No "can you tell me your budget?" It's already there.
+
+## Category Tracking
+
+Lunch Money organizes transactions into categories. Tyler knows all the category IDs, so he can do things like:
+
+- Sum up all Fast Food spending for the month
+- Compare Groceries vs. Restaurants spending
+- Flag unusual charges in Software & Subscriptions
+- Track how much is going to probation classes (Dragonfly Support)
+
+The known categories cover everything from Family Support to Video Games to Pharmacy & Supplements. When Tyler categorizes a transaction, he uses the actual Lunch Money category ID so everything stays consistent between the app and the API.
+
+## Recurring Bill Detection
+
+Lunch Money automatically detects recurring charges, and Tyler can pull that list via the `/tyler/recurring` endpoint. This matters for two reasons.
+
+First, Tyler can warn me about upcoming bills. If rent is due in 3 days and my checking account is light, that's an alert worth sending.
+
+Second, it makes budgeting accurate. My fixed monthly costs are about $1,166: rent, probation classes, internet, gym, streaming, software subscriptions. Tyler knows exactly what's recurring and what's discretionary, so when I ask "how much do I have left to spend this month," the answer is real.
+
+## The Weekly Financial Review
+
+Every Sunday at 10am, Tyler's weekly summary cron pulls the financial snapshot alongside health and daily context data. The financial section covers:
+
+- Account balances and week-over-week change
+- Total income vs. total expenses for the week
+- Biggest expense categories
+- Upcoming bills for the next week
+- Progress toward any savings goals
+
+This gets emailed to me and saved to memory. Over time, Tyler accumulates weeks of financial snapshots in the daily notes, which means he can spot trends: "You spent $200 more on food this week than last week" or "Your income from Drummin Up BBQ was lower than average."
+
+## Quick Analysis
+
+Tyler can do ad-hoc analysis too. Pull transactions for a date range, pipe them through a quick calculation, and give me the answer. Income vs. expenses, category breakdowns, average daily spending. The data is structured JSON, so slicing it any way is straightforward.
+
+The LifeDirector helper script (`ld.sh`) makes this a one-liner. Source the credentials, hit the endpoint, parse the response. Tyler does this in the background whenever financial context would be useful.
+
+## Why This Matters
+
+I could log into my bank app and look at transactions. I could open Lunch Money and review categories. But I wouldn't do that proactively. I'd only check when something felt wrong, and by then it might be too late.
+
+With Tyler wired into my finances, the monitoring is continuous. The weekly reviews happen automatically. The context injection means every conversation about money is informed by real data. And the alerts mean I don't get surprised by a bill I forgot about.
+
+For someone living paycheck to paycheck, that awareness is the difference between making rent and scrambling.

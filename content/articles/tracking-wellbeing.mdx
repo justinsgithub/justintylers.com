@@ -1,0 +1,106 @@
+---
+title: "Weather, Mood, Sleep, and Self-Care: How Tyler Tracks My Wellbeing"
+description: "Automated check-ins, weather-aware suggestions, and effortless logging that turns daily noise into useful patterns."
+publishedAt: "2026-02-20"
+category: "tech"
+tags: ["health", "mood-tracking", "sleep", "self-care", "weather"]
+featured: false
+draft: false
+---
+
+Tracking how you feel is supposed to be simple. Rate your mood, log your sleep, note what you did for self-care. But doing it manually, every day, consistently enough to see patterns? That's where everyone falls off.
+
+Tyler handles this by making the tracking come to me instead of me going to it.
+
+## The Daily Rhythm
+
+Tyler operates on a cron schedule with four touchpoints throughout the day:
+
+**8am: Morning Briefing.** Tyler pulls my daily context from LifeDirector, which includes today's calendar, active goals, habit streaks, recovery milestones, and the current weather. The weather isn't decoration. If it's cold and dark in Coeur d'Alene in February, Tyler factors that into suggestions. "It's 28 degrees and overcast. Good day for an indoor workout." If it's sunny and 45, maybe a walk gets suggested instead.
+
+**2pm: Habit Check.** Mid-day pulse. Have I logged food? Did I work out? Am I on track with whatever I said I wanted to do today? This isn't nagging. It's a quick nudge that catches the day before it gets away from me. If I logged a workout this morning, Tyler knows and skips that. If I haven't eaten since breakfast, it might flag that.
+
+**8pm: Evening Reflection.** This is where the day's data gets captured. Mood, energy level, sleep from last night, anything notable. Tyler prompts for what it doesn't already have. If I logged food and a workout earlier, those are already in the system. The evening reflection fills in the subjective stuff that only I can report.
+
+**Sunday 10am: Weekly Summary.** Steps back and looks at the week. Patterns in mood, sleep trends, workout consistency, nutrition averages. This is where the data starts being useful beyond any single day.
+
+## The Daily Context Endpoint
+
+The backbone of all this is LifeDirector's `/tyler/daily-context` endpoint. When Tyler calls it, it gets back a structured snapshot of everything relevant to right now:
+
+- **Calendar:** What's on the schedule today
+- **Habits:** Active habits and current streaks
+- **Goals:** What I'm working toward and progress
+- **Recovery milestones:** How long I've been sober, upcoming milestone dates
+- **Recent insights:** Anything Tyler has logged recently (observations, patterns, suggestions)
+- **Weather:** Current conditions and forecast
+
+Tyler uses all of this as context for every interaction. When I ask "what should I focus on today," it doesn't give generic advice. It knows my calendar, my goals, my recent patterns, and the weather. The answer is grounded in my actual life.
+
+## Health Tracking
+
+The `/tyler/health-summary` endpoint aggregates mood, sleep, fitness, and supplement data over a configurable window (default 7 days). This is where patterns emerge.
+
+**Mood and energy** get logged on simple scales. Not complicated. Just "how are you feeling" and "how's your energy" during check-ins. Over weeks, this data shows things I wouldn't notice in the moment. Did my mood dip every Wednesday? (Probably a work pattern.) Does my energy correlate with sleep duration? (Almost certainly.) Am I consistently lower on days I skip the gym? (That's useful to know.)
+
+**Sleep** gets tracked in hours and quality. Tyler can correlate sleep data with mood and energy the following day. The health summary includes these correlations when they're statistically meaningful.
+
+**Fitness** comes from workout logs (the Google Tasks system I covered in another post). Tyler knows what I did, when, and can track consistency over time. Am I hitting the gym 4 times a week like I planned, or has it been slipping?
+
+**Supplements** round out the picture. I'm on TRT, armodafinil, creatine, and a few other things. Tracking what I take and when matters for understanding how everything interacts.
+
+## How Insights Get Pushed
+
+Tyler doesn't just collect data. It generates insights and pushes them to LifeDirector where I can see them in the app:
+
+```bash
+# Tyler pushes an observation
+POST /tyler/update
+{
+  "action": "addInsight",
+  "data": {
+    "type": "pattern",
+    "category": "health",
+    "title": "Sleep-Mood Correlation",
+    "content": "Your mood scores average 1.5 points higher on days following 7+ hours of sleep.",
+    "priority": 2
+  }
+}
+```
+
+Insight types range from casual observations to urgent alerts:
+- **Observations:** "You've worked out 4 days in a row. That's a new streak."
+- **Patterns:** "Your energy dips consistently around 2pm on work days."
+- **Suggestions:** "You haven't logged water today. Staying hydrated?"
+- **Celebrations:** "13 months sober today."
+- **Alerts:** "You've missed 3 gym sessions this week. Everything okay?"
+
+These show up in the Tyler section of LifeDirector, filtered by category and priority. I can scroll through them or ignore them. The point is they exist without me having to think about tracking.
+
+## The Effortless Part
+
+Here's what actually matters: I don't open a mood tracking app. I don't fill out a sleep diary. I don't maintain a self-care journal.
+
+Tyler asks me a question during a conversation I'm already having. I answer in natural language. Tyler logs it. The cron jobs ensure it happens consistently even on days I'm busy and wouldn't think to track anything.
+
+The food logs come from Google Tasks (20 seconds of effort). The workout logs come from Google Tasks. The calendar data comes from Google Calendar automatically. The weather comes from an API. The mood and energy come from quick conversational check-ins.
+
+The result is a comprehensive wellbeing dataset that I barely had to think about maintaining. And over time, that dataset tells me things about myself I wouldn't have noticed otherwise.
+
+## What Makes This Different
+
+Most health tracking apps try to be the center of your life. They want you to open them multiple times a day, engage with their UI, build habits around their interface. The app itself becomes the chore.
+
+This system is different because:
+
+1. **The data collection is distributed.** Food goes through Google Tasks. Calendar is Google Calendar. Mood comes through conversation with Tyler. No single app to "remember to use."
+
+2. **The tracking is conversational.** Tyler asks. I answer. It's not a form to fill out. It's a person (well, AI) checking in.
+
+3. **The analysis is automatic.** I don't look at charts and try to find patterns. Tyler finds them and tells me. The health summary endpoint does the correlation analysis. I just read the insights.
+
+4. **It gets smarter over time.** More data means better pattern detection. The pantry learns my foods. The cron jobs build a longer history. The correlations get more statistically significant with each passing week.
+
+The goal was never to build the best mood tracker or the best food logger or the best workout app. It was to build a system where tracking my wellbeing requires so little effort that I actually do it. Every day. Without thinking about it.
+
+That's the only kind of tracking that works.

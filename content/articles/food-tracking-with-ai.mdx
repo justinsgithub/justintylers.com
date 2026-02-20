@@ -1,0 +1,121 @@
+---
+title: "Tracking Every Meal With AI: My Food Logging System"
+description: "A 460K food USDA database, Google Tasks as input, and an AI that parses '8 drumsticks' into real nutrition data."
+publishedAt: "2026-02-20"
+category: "tech"
+tags: ["food-tracking", "health", "usda", "google-tasks"]
+featured: false
+draft: false
+---
+
+Every food tracking app I've tried fails the same way: too much friction. Open the app. Search for the food. Scroll through 50 results. Pick the one that looks right. Enter the amount. Do that for every item, every meal, every day. Nobody keeps that up.
+
+So I built something different. I type "8 drumsticks, 2 cups rice" into a Google Task on my phone, and Tyler figures out the rest.
+
+## The USDA Database
+
+The foundation is a local SQLite database with 460,000 foods from the USDA FoodData Central. Not some random nutrition API that might go down or start charging. A local file, sitting on disk, with FTS5 full-text search so lookups are instant.
+
+```bash
+# Search for a food
+python3 food-lookup.py "chicken drumstick"
+
+# See full vitamin and mineral profile
+python3 food-lookup.py "jasmine rice" --full
+
+# JSON output for programmatic use
+python3 food-lookup.py "banana" --json
+
+# Look up by database ID
+python3 food-lookup.py --id 12345
+
+# Filter by data type
+python3 food-lookup.py "rxbar" --type branded
+```
+
+The database tracks everything: macros (calories, protein, fat, carbs, fiber, sugar), all the B vitamins, vitamins A/C/D/E/K, minerals (calcium, iron, magnesium, potassium, zinc, selenium, and more), plus saturated fat, trans fat, and cholesterol. When Tyler looks up a food, it gets the complete nutritional picture, not just calories and protein.
+
+I built the database from USDA's raw JSONL files with a custom Python script. Foundation and SR Legacy entries (research-grade data on whole foods) are prioritized over branded entries, but branded items are there too for packaged foods.
+
+## The Workflow
+
+Here's what actually happens when I eat:
+
+**Step 1:** I open Google Tasks on my phone and add a task to my "Tyler" list. Title: "Food 7pm". Notes:
+
+```
+8 drumsticks
+2 cups jasmine rice
+watermelon
+```
+
+That's it. That's all the effort required from me.
+
+**Step 2:** Tyler's task processor picks it up and parses the raw text into structured data. It detects meal type from the time in the title (7pm = dinner). It extracts amounts and units from each line. "8 drumsticks" becomes `{name: "drumsticks", amount: 8, unit: "serving"}`. "2 cups jasmine rice" becomes `{name: "jasmine rice", amount: 2, unit: "cups"}`.
+
+The parser handles a bunch of formats:
+- "2 cups uncooked jasmine rice" (amount + unit + name)
+- "pasta salad 0.675 lbs" (name + amount + unit)
+- "8 drumsticks" (amount + name)
+- "protein bar 330 calories" (name + inline calorie override)
+
+**Step 3:** An AI subagent takes the parsed items and matches them against my pantry first, then the USDA database.
+
+## The Pantry System
+
+This is what makes it sustainable. The pantry is a collection of foods I eat regularly, stored in LifeDirector with their nutritional data already linked to USDA entries.
+
+When Tyler sees "drumsticks" in my food log, it doesn't search the entire 460K food database. It checks my pantry first and finds "Sanderson Farms Chicken Drumsticks" with the exact nutritional profile already mapped. "Jasmine rice" matches "Golden Jasmine Rice." "rx bar" matches the specific RX Bar variant I buy.
+
+The pantry grows organically. First time I eat something, Tyler searches the USDA database, finds the best match, adds it to my pantry, and logs it. Second time, it's a pantry hit. No search needed. Over time, 90% of what I eat is already in the pantry because most people eat the same 30-50 foods on rotation.
+
+Adding to the pantry can link directly to a USDA food entry with a grams-per-unit conversion:
+
+```bash
+# Linked to USDA: full vitamin/mineral profiles automatically
+{"name": "Chicken Drumstick", "defaultAmount": 1,
+ "defaultUnit": "drumstick", "foodId": "usda_id_here",
+ "gramsPerUnit": 104, "isFavorite": true}
+
+# Branded/custom: manual macros from the label
+{"name": "RX Bar Chocolate Sea Salt", "defaultAmount": 1,
+ "defaultUnit": "bar", "calories": 210, "protein": 12,
+ "carbs": 24, "fat": 9}
+```
+
+Linked items are better because the USDA data includes micronutrients. But for branded snacks or restaurant meals, manual macros work fine.
+
+## Smart Parsing Details
+
+The food task processor does more than simple text splitting. It handles:
+
+**Meal type detection** from the task title. "Food 8am" = breakfast. "Food 12:30pm" = lunch. "Food 7pm" = dinner. You can also override with keywords: "Food breakfast" or "Food snack". If there's no time or keyword, it guesses based on when the task was created.
+
+**Inline calorie overrides.** If I write "protein shake 330 calories," Tyler trusts that number instead of looking it up. Useful for restaurant meals or homemade stuff where I have a rough estimate.
+
+**Fuzzy pantry matching.** The AI subagent uses common sense. "Uncooked jasmine rice" still matches "Golden Jasmine Rice" in the pantry because it's the same food. "Rx nut bars" matches the right RX Bar variant. It strips store names too. "Winco chicken breast" just searches for "chicken breast."
+
+**Timestamp precision.** If I title a task "Food 7pm," the system uses that exact time for the log entry, even if I don't get around to creating the task until 9pm. The task's "updated" date provides the calendar day, and the parsed time overrides the hour. This means meal timing data is accurate.
+
+## What Gets Logged
+
+Every food log entry goes to LifeDirector with:
+- The food name and amount
+- Full macronutrient breakdown (calories, protein, carbs, fat, fiber, sugar)
+- Meal type (breakfast, lunch, dinner, snack)
+- Timestamp
+- Link to the pantry item (which links to USDA data for micronutrients)
+
+Over time, this builds a complete picture: what I eat, when I eat it, and exactly what nutrition I'm getting. Not estimates. Not "I think I had about 2000 calories today." Actual data.
+
+## Why This Works When Apps Don't
+
+The friction equation:
+
+**Traditional food tracking:** Open app, search, scroll, select, enter amount, repeat. ~2 minutes per meal, 6-8 minutes per day, requires your phone and attention at every meal.
+
+**This system:** Open Google Tasks, type a few words, done. ~20 seconds per meal. Under a minute per day. I can do it while walking away from the table.
+
+The AI handles the annoying parts: food identification, nutritional lookup, unit conversion, database matching. I just tell it what I ate in plain language. The pantry means it gets faster and more accurate over time as it learns my foods.
+
+The key design principle: make the human part as easy as possible, offload everything else to the machine. That's how you build a tracking habit that actually sticks.

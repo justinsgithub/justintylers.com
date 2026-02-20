@@ -1,0 +1,110 @@
+---
+title: "Building LifeDirector: My Personal Mission Control"
+description: "A Convex-powered PWA that tracks goals, habits, health, finances, relationships, and food, with Tyler as the AI operator."
+publishedAt: "2026-02-20"
+category: "tech"
+tags: ["lifedirector", "convex", "pwa", "life-tracking"]
+featured: true
+draft: false
+---
+
+I tried every life tracking app. Notion, Todoist, Apple Health, YNAB, various habit trackers. They all do one thing well and ignore everything else. None of them talk to each other. And none of them have an AI that actually understands the data.
+
+So I built LifeDirector.
+
+## What It Is
+
+LifeDirector is a personal mission control dashboard. It's a PWA (progressive web app) built with Next.js, Convex for the backend, Clerk for auth, shadcn/ui for components, and Tailwind v4 for styling. It runs at a production Convex deployment and works on my phone as an installed app.
+
+It tracks:
+- **Goals** with progress metrics and deadlines
+- **Habits** with daily completion tracking
+- **Health** including mood, sleep, fitness, and supplements
+- **Finances** via Lunch Money integration (accounts, transactions, recurring bills)
+- **Relationships** with contact health scores and interaction history
+- **Food** with a full nutrition database and meal logging
+
+But here's the thing that makes it different from every other tracker: LifeDirector is the dashboard. Tyler is the operator.
+
+## The Dashboard vs. Operator Split
+
+Early on I had to make a decision. LifeDirector was trying to be everything: task manager, calendar, notes, tracker, AI interface. It was bloated. I was rebuilding Google.
+
+So I stripped it down. Removed tasks entirely (Google Tasks handles that). Removed the calendar view (Google Calendar is better). Removed notes (daily notes live in Tyler's workspace). What remained was the pure tracking layer: the stuff that needs a custom database and custom UI.
+
+Tyler, running in Claude Code or as the Telegram daemon, is the action layer. He queries LifeDirector for data, pushes insights back in, and acts on what he finds. LifeDirector doesn't need to be smart. It needs to be a clean, queryable data store with a good mobile UI. Tyler provides the intelligence.
+
+## The Tyler API
+
+LifeDirector exposes a set of HTTP endpoints specifically for Tyler. They're authenticated with an API key and designed for programmatic access.
+
+The key endpoints:
+
+**`GET /tyler/daily-context`** returns a full daily briefing: calendar events, habit status, goal progress, recovery milestones, recent insights, and weather. This is what Tyler pulls every morning for the briefing.
+
+**`GET /tyler/financial-snapshot`** returns account balances, net worth, recurring expenses and income summaries, all synced from Lunch Money.
+
+**`GET /tyler/health-summary`** takes a `daysBack` parameter and returns mood trends, sleep data, fitness logs, and supplement tracking with correlations.
+
+**`GET /tyler/relationships`** returns relationship health scores, recent interactions, and suggested outreach targets.
+
+**`POST /tyler/update`** lets Tyler push insights back into the app. An insight has a type (observation, suggestion, reminder, celebration, alert, pattern, milestone, opportunity), a category (goals, habits, relationships, health, finance, recovery, work, general), a title, content, and priority level.
+
+**`POST /tyler/log-food`** accepts parsed nutrition data. Tyler handles the natural language part (someone says "I had 3 drumsticks and rice"), looks up the foods in a local USDA database with 460,000 entries, calculates the macros, and posts the structured data.
+
+There's a helper script that makes all of this easy: `ld.sh`. It handles auth and formatting so Tyler can make API calls in a single line.
+
+## The Cron Jobs
+
+Tyler doesn't wait for me to ask. The Telegram daemon runs scheduled jobs that pull data from LifeDirector and generate proactive messages.
+
+**Morning Briefing (8am):** Pulls the full daily context, then sends me a message with weather, calendar highlights, recovery milestone updates, habit goals for the day, and something motivational. This goes to both Telegram and email.
+
+**Midday Habit Check (2pm):** Pulls today's health data. If I haven't logged food or checked off habits, Tyler sends a gentle nudge.
+
+**Evening Reflection (8pm):** Pulls the full daily context again, summarizes what went well, notes patterns, and saves key observations to memory. Sent via email as a reflection I can read before bed.
+
+**Weekly Summary (Sundays at 10am):** The big one. Pulls a full week of health data, financial snapshot, and daily context. Tyler writes a comprehensive review covering wins, patterns, health trends, financial status, and goals progress. Saves it to memory and emails it.
+
+**Relationship Check-ins (Mon and Thu at 11am):** Pulls relationship data and cross-references with contact history files. Suggests who I should reach out to.
+
+On top of that, there are maintenance crons: git workspace backup every 4 hours, SMS sync hourly, contacts sync daily at midnight, Google Tasks processing every 30 minutes.
+
+## The Convex Backend
+
+I chose Convex for the backend and it's been the right call. Real-time reactivity means the PWA updates instantly when Tyler pushes data. The schema is defined in TypeScript. Queries and mutations are just functions. No REST API boilerplate, no ORM, no migration headaches.
+
+Key tables in the schema: goals, habits, health entries, food logs, user foods (pantry), Tyler insights, recurring items, transactions. All strongly typed, all queryable.
+
+The Tyler HTTP endpoints live in `convex/http.ts` using Convex's `httpAction` pattern. They validate the API key, look up the user, and then call internal queries or mutations. Adding a new endpoint takes about 10 lines of code.
+
+The production deployment is `dazzling-tern-678`. There's a dev deployment for testing, but all real data goes to production. After schema changes it's just `bunx convex codegen` and push.
+
+## The Food System
+
+This one's worth calling out because it was surprisingly involved.
+
+LifeDirector has a food tracking feature backed by a local USDA database: 460,000 foods with full nutritional profiles including vitamins and minerals. It's a SQLite database with FTS5 (full-text search) so lookups are fast.
+
+The workflow: I tell Tyler what I ate (naturally, like "3 chicken drumsticks and a cup of rice"). Tyler searches the USDA database, matches the foods, calculates macros based on portions, and posts the structured data to LifeDirector via the `/tyler/log-food` endpoint. The app shows it in a clean daily view with calorie and macro breakdowns.
+
+There's also a pantry system. Common foods I eat regularly get added as "user foods" with default portions, so logging gets faster over time. The app has a quick-add feature where I can type natural language food notes from my phone, and Tyler processes them on a 30-minute cron cycle.
+
+## Why Not Just Use MyFitnessPal?
+
+Same reason I built all of this: integration. MyFitnessPal doesn't know about my finances. YNAB doesn't know about my health. No single app connects these domains.
+
+LifeDirector does. When Tyler writes my evening reflection, he can correlate bad mood days with poor sleep. He can notice that spending spikes happen on stressful weeks. He can see that I skip the gym when work gets chaotic. That cross-domain insight is the whole point.
+
+It's not about any single feature being better than a dedicated app. It's about having one system where all the data lives, with an AI that can see all of it at once.
+
+## What's Next
+
+LifeDirector is functional and I use it daily. The Tyler integration is solid. But there's more to build:
+
+- Better goal visualization with progress charts
+- Social media metrics tracking (followers, engagement, posting frequency)
+- A proper weekly review UI in the app, not just emailed summaries
+- Workout programming with progressive overload tracking
+
+The core architecture is right, though. Dashboard for data, Tyler for intelligence. Everything feeds into one system. That's the foundation everything else builds on.

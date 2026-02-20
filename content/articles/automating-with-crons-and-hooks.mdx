@@ -1,0 +1,150 @@
+---
+title: "Automating My Life With Cron Jobs and Smart Hooks"
+description: "The four Claude Code hooks and Tyler daemon cron jobs that make context injection automatic and keep my AI companion always aware."
+publishedAt: "2026-02-20"
+category: "tech"
+tags: ["automation", "cron-jobs", "hooks", "claude-code"]
+featured: false
+draft: false
+---
+
+The biggest problem with AI assistants is context. The model is smart enough. The question is always: does it know what it needs to know right now?
+
+Most people solve this by explaining their situation every time. "I'm a software developer working on X, my budget is Y, I'm dealing with Z." That gets old fast and you inevitably leave out something important.
+
+I solved it with automation. Four hooks that fire at the right moments and a daemon running cron jobs around the clock. Tyler always has the context he needs, and I never have to provide it manually.
+
+## How Claude Code Hooks Work
+
+Claude Code has a hook system defined in `settings.json`. You specify a lifecycle event, a shell command to run, and a timeout. The hook's stdout gets injected as context that Claude sees. It's simple and powerful.
+
+My settings file registers four hooks:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/session-start.sh", "timeout": 5 }] }],
+    "PreCompact": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/pre-compact.sh", "timeout": 10 }] }],
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/smart-context.sh", "timeout": 3 }] }],
+    "SessionEnd": [{ "hooks": [{ "type": "command", "command": "~/.claude/hooks/session-end.sh", "timeout": 10 }] }]
+  }
+}
+```
+
+Each hook is a bash script. No AI calls, no network requests (except one fast local binary call for calendar). They all complete in under their timeout. Let me walk through each one.
+
+## Hook 1: Session Start
+
+**When:** Every time I open a new Claude Code session.
+
+**What it does:**
+1. Timestamps `sessions.md` so there's a log of when I was working
+2. Outputs the current time (in Pacific)
+3. Loads today's daily note. If it's longer than 60 lines, shows just the last 60 (most recent context)
+4. Loads yesterday's daily note. Same truncation at 40 lines
+5. Reports which session number this is for today
+
+**Why it matters:** When I start a session at 3pm, Tyler immediately knows everything that happened today and yesterday. What we worked on, what decisions were made, what files were modified. No "where were we?" needed.
+
+The daily notes are the backbone. Every other hook writes to them, and this hook reads them back. It's a self-reinforcing cycle: the more sessions I run, the richer the daily notes get, the more context future sessions have.
+
+## Hook 2: Smart Context (UserPromptSubmit)
+
+**When:** Every single message I type. This is the most important hook.
+
+**What it does:** Reads the prompt text, lowercases it, and checks for keyword patterns. Based on what it finds, it injects relevant context sections.
+
+**Relationship matching:** Scans through every directory in `relationships/`. For each person, it extracts their first name and checks if that name appears in my message. If I type "what should I say to Riley," it finds the `Riley/` directory and injects the first 40 lines of their profile. Names shorter than 3 characters are skipped to avoid false matches. Only the first match triggers, keeping the injection small.
+
+**Financial matching:** Regex pattern checks for words like `financ`, `money`, `budget`, `rent`, `paycheck`, `income`, `expense`, `bank`, `saving`, `afford`, `bills`, `broke`. If any match, it extracts the Current Finances section from MEMORY.md (account balances, income breakdown, fixed expenses).
+
+**Recovery matching:** Checks for `recover`, `sober`, `sobriety`, `drinking`, `alcohol`, `meth`, `relapse`, `probation`, `dragonfly`, `class`. Injects the Recovery section from memory.
+
+**Calendar matching:** Checks for `calendar`, `schedule`, `tomorrow`, `meeting`, `appointment`, `events`, `busy`, `free time`. Hits the local `gog` CLI binary to pull today's Google Calendar events and injects them.
+
+**The 3-second timeout** is critical. This hook runs on every message. If it were slow, every interaction would feel laggy. The keyword matching is just `grep` calls. The calendar lookup is a single local binary call. It's fast enough to be invisible.
+
+**What this creates:** I never think about context loading. I just talk naturally. "I'm worried about rent" and Tyler has my full financial picture. "Should I text Riley back?" and Tyler has our full conversation history and relationship analysis. "What's on my schedule?" and Tyler sees my calendar. The right information appears at the right moment, every time.
+
+## Hook 3: Pre-Compact
+
+**When:** Before Claude's context window compresses (when the conversation gets too long for the model's context limit).
+
+**What it does:** Receives JSON on stdin with the session ID, transcript path, working directory, and trigger reason. It then:
+1. Extracts the last 20 user messages from the transcript
+2. Identifies all files that were modified (Write/Edit tool calls)
+3. Captures the last assistant message for task state
+4. Writes all of this to the daily note as a "Pre-Compaction Save" entry
+
+**Why it matters:** Context compaction is where you lose information. The model summarizes its context window to fit more conversation. Without this hook, anything discussed early in a long session could be lost.
+
+By dumping the session state to the daily note before compaction, the information survives. The next session (or the post-compaction continuation) can pick up where things left off by reading the daily note, which the session-start hook loads automatically.
+
+It's a memory flush. Like saving your game before a checkpoint.
+
+## Hook 4: Session End
+
+**When:** A session closes (terminal closes, explicit exit, etc.)
+
+**What it does:** Reads the transcript and only writes a summary if the session was "meaningful" (3 or more tool calls, meaning actual work was done, not just a quick question). The summary includes:
+- Project name (derived from working directory)
+- Total tool call count
+- Number of files modified
+- The first user message (usually describes the task)
+- List of modified file paths (if 10 or fewer)
+
+This also appends a one-liner to `sessions.md` for quick lookup.
+
+**Why it matters:** This creates an automatic work log. When I start a session tomorrow, the daily note from today shows exactly what I worked on, how much work was done, and which files were touched. No manual journaling required.
+
+The "skip trivial sessions" threshold is smart. If I opened Claude Code, asked one question, and closed it, that doesn't need a summary entry. The 3-tool-call minimum filters noise.
+
+## The Daemon Cron Jobs
+
+The hooks handle Claude Code sessions. But Tyler also runs as a Telegram daemon 24/7, and the daemon has its own automation layer powered by the `croner` library.
+
+**Morning Briefing (8am PT):** Pulls the full daily context from LifeDirector (calendar, habits, goals, recovery milestones, insights, weather). Sends Tyler a prompt to generate a morning briefing for me. Result goes to Telegram and email.
+
+**Midday Habit Check (2pm PT):** Pulls today's health data. Tyler checks what habits are completed, what food has been logged, and whether mood has been tracked. If anything's missing, he sends a nudge.
+
+**Evening Reflection (8pm PT):** Another full context pull. Tyler summarizes the day, notes patterns, and saves key observations to MEMORY.md. Sent via email so I can read it before sleep.
+
+**Weekly Summary (Sunday 10am PT):** The comprehensive one. Pulls 7 days of health data, the financial snapshot, and daily context. Tyler writes a full weekly review and emails it.
+
+**Relationship Check-ins (Mon and Thu 11am PT):** Pulls relationship data from LifeDirector and cross-references with local contact history. Tyler suggests who I should reach out to.
+
+**Workspace Git Backup (every 4 hours):** Commits and pushes all changes to the `.claude` workspace repo. This protects the memory files, daily notes, and relationship data.
+
+**SMS Sync (hourly):** Runs the SMS sync script to keep message data current.
+
+**Contacts Sync (daily at midnight):** Syncs Google Contacts data.
+
+**Google Tasks Processing (every 30 minutes):** Checks for new tasks (food logs, workout entries) and processes them into LifeDirector.
+
+## The Full Picture
+
+Here's what a typical day looks like from the automation perspective:
+
+**8:00am** - Cron: morning briefing delivered to Telegram + email.
+
+**Throughout the day** - Every message I send to Tyler, smart-context injects relevant data. Relationship profiles when I mention people. Financial data when I mention money. Calendar when I mention schedule.
+
+**2:00pm** - Cron: midday habit check. "Hey, you haven't logged any food today."
+
+**Afternoon work sessions** - Session-start loads daily notes. Pre-compact saves state if conversations run long. Session-end logs summaries.
+
+**8:00pm** - Cron: evening reflection summarizes the day.
+
+**Every 4 hours** - Workspace backed up to git.
+
+**Every 30 minutes** - Google Tasks processed, food and workout entries logged.
+
+I don't think about any of this. It just runs. Tyler always has the right context, the right timing, and the right data. That's the whole point: automation that removes the friction between wanting an AI that knows your life and actually having one.
+
+## Building Your Own
+
+If you're using Claude Code, you can start with just the settings.json hook configuration and a single bash script. The session-start hook is the most impactful one to build first: load your own daily notes, set the current time, give your sessions continuity.
+
+Smart context is the next one to add. Even a simple version that injects one or two data sections based on keywords will make interactions feel dramatically more aware.
+
+The cron jobs require more infrastructure (the Telegram daemon, LifeDirector, etc.), but the hooks alone are transformative. Four bash scripts and a JSON config file turned Claude Code from a stateless tool into something that remembers.
