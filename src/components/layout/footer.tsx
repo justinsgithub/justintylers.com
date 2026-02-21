@@ -18,7 +18,7 @@ export function Footer() {
         <div className="flex flex-col gap-8 sm:flex-row sm:justify-between">
           <div className="space-y-4">
             <Link href="/" className="text-lg font-semibold tracking-tight">
-              Justin Tyler
+              Justin Angeles
             </Link>
             <p className="max-w-xs text-sm text-muted-foreground">
               Health and wellness, software development, and AI integration.

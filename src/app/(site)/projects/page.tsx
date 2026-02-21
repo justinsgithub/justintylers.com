@@ -12,16 +12,15 @@ export const metadata: Metadata = {
 const projects = [
   {
     slug: "contractors",
-    title: "Contractor Lead Generation",
+    title: "Automated Lead Generation",
     description:
-      "Built a lead generation platform for contractor sales teams. Custom scraping from state licensing boards, phone number enrichment, and a CRM dashboard for managing outreach.",
+      "Built a lead generation platform for contractor tools sales team. Automated reasearch and scraping from various sources and databases on the web, phone number enrichment, quality filtering, and a client dashboard for data export and invoice creation.",
     icon: Database,
   },
   {
     slug: "spa-science-lab",
     title: "Spa Science Lab",
-    description:
-      "Educational platform teaching spa and wellness science through interactive articles, ingredient databases, glossary, and structured learning paths.",
+    description: "Educational platform teaching spa and wellness science through interactive articles, ingredient databases, glossary, and structured learning paths.",
     icon: Microscope,
   },
   {

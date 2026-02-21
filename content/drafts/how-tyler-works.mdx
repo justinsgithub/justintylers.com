@@ -1,0 +1,206 @@
+---
+title: "Architecture of Tyler: How My AI Assistant Actually Works"
+description: "The technical deep dive into Tyler's memory system, smart context hooks, anti-amnesia saves, and session continuity."
+publishedAt: "2026-02-20"
+category: "tech"
+tags: ["ai", "claude-code", "architecture", "automation"]
+featured: false
+draft: true
+---
+
+I wrote about what Tyler is in "Meet Tyler." This article is about how it works. The actual architecture, the files, the hooks, the daemon, the integration layer. If you're building something similar or want to understand what's possible with Claude Code, this is the blueprint.
+
+The whole system is bash scripts, markdown files, a TypeScript daemon, and a Convex backend. No Docker. No Kubernetes. No custom infrastructure. Just files on a Linux machine and scripts that know when to run.
+
+## The Workspace
+
+Tyler's brain lives at `~/.claude/`. It's a regular directory, tracked with git, organized like this:
+
+```
+~/.claude/
+  SOUL.md          # personality, values, communication style
+  MEMORY.md        # dynamic knowledge (finances, projects, recovery)
+  USER.md          # full profile (family, jobs, timeline, patterns)
+  CLAUDE.md        # operational instructions (API refs, conventions)
+  memory/          # daily notes (YYYY-MM-DD.md)
+  relationships/   # one directory per person
+  hooks/           # the 4 lifecycle scripts
+  tyler-daemon/    # Telegram bot (TypeScript)
+  scripts/         # utility scripts (notify, sync, lookup)
+  data/            # SMS archives, food database, social graph
+  .env             # credentials (gitignored)
+```
+
+Git tracking matters. Every change to Tyler's memory is versioned. The daemon auto-commits every 4 hours. If something gets corrupted or accidentally overwritten, I can roll back.
+
+## File-Based Memory
+
+Claude doesn't have persistent memory across sessions. Every session starts blank. The files are the memory. When a session starts, Tyler reads the files and knows everything. When something important happens, Tyler writes to the files so the next session knows too.
+
+The memory is split across files by purpose:
+
+**SOUL.md** is the identity layer. Personality, worldview, communication style, boundaries. Things like: "Have actual opinions. Not 'it depends' hedging." and "If Justin's about to do something dumb, tell him." This file changes rarely. It's who Tyler is.
+
+**MEMORY.md** is the dynamic knowledge layer. Current finances (account balances, income, expenses), recovery status, active projects, relationship summaries, key decisions, lessons learned. This file changes constantly. Any time I share new information about my life, Tyler updates it.
+
+**USER.md** is the static profile. Birthday, job history, family tree, addresses, psychological patterns from journal analysis, current stressors. This changes when my life circumstances change.
+
+**Daily notes** (`memory/YYYY-MM-DD.md`) are the continuity backbone. Every session's topics, files modified, tool counts, pre-compaction saves, and summaries get appended here. When Tyler starts a new session, it loads today's and yesterday's notes to pick up where things left off.
+
+**Relationship files** (`relationships/Riley/PROFILE.md`, etc.) track significant people. Conversation history, analysis, recommended approaches, last contact date. When I mention someone by name, Tyler checks their file before responding.
+
+This might sound like a lot of manual maintenance. It's not. The hooks handle most of it automatically.
+
+## The Four Hooks
+
+Claude Code supports lifecycle hooks: shell scripts that fire at specific moments. They receive context on stdin, and their stdout gets injected as context Claude sees. I have four, configured in `settings.json`:
+
+```json
+{
+  "hooks": {
+    "SessionStart": [{ "hooks": [{ "type": "command",
+      "command": "~/.claude/hooks/session-start.sh", "timeout": 5 }] }],
+    "PreCompact": [{ "hooks": [{ "type": "command",
+      "command": "~/.claude/hooks/pre-compact.sh", "timeout": 10 }] }],
+    "UserPromptSubmit": [{ "hooks": [{ "type": "command",
+      "command": "~/.claude/hooks/smart-context.sh", "timeout": 3 }] }],
+    "SessionEnd": [{ "hooks": [{ "type": "command",
+      "command": "~/.claude/hooks/session-end.sh", "timeout": 10 }] }]
+  }
+}
+```
+
+### Hook 1: Session Start
+
+Fires when I open Claude Code. The script:
+
+1. Timestamps `sessions.md` (logs when I was working)
+2. Outputs the current time in Pacific
+3. Loads today's daily note (last 60 lines if it's long)
+4. Loads yesterday's daily note (last 40 lines)
+5. Reports which session number this is for today
+
+The effect: Tyler immediately knows what happened today and yesterday. What we worked on, what decisions were made, what files were modified. No "where were we?" conversation.
+
+The truncation matters. Daily notes can get long. Loading the full thing would waste context window. The last 60 lines of today and last 40 of yesterday is the sweet spot: recent enough to be relevant, small enough to leave room for actual work.
+
+### Hook 2: Smart Context (UserPromptSubmit)
+
+This is the most important hook. It fires on every single message I send.
+
+The script reads my prompt, lowercases it, and checks for keyword patterns. Based on what it finds, it injects relevant data sections.
+
+**Relationship matching.** Scans every directory in `relationships/`. For each person, extracts their first name and checks if it appears in my message as a whole word. If I type "what should I say to Riley," it finds `Riley/` and injects the first 40 lines of her profile. Names shorter than 3 characters get skipped to avoid false positives. Only the first match triggers to keep the injection small.
+
+**Financial matching.** Regex checks for: `financ`, `money`, `budget`, `rent`, `paycheck`, `income`, `expense`, `bank`, `saving`, `afford`, `bills`, `broke`. Any hit extracts the Current Finances section from MEMORY.md (account balances, income, expenses).
+
+**Recovery matching.** Checks for: `recover`, `sober`, `sobriety`, `drinking`, `alcohol`, `meth`, `relapse`, `probation`, `dragonfly`, `class`. Injects the Recovery section.
+
+**Calendar matching.** Checks for: `calendar`, `schedule`, `tomorrow`, `meeting`, `appointment`, `events`, `busy`, `free time`. Calls the `gog` CLI to pull today's Google Calendar events.
+
+The 3-second timeout is critical. This hook runs on every message. If it were slow, every interaction would feel laggy. The keyword matching is just `grep` calls on lowercased text. The calendar lookup is a single local binary call. The whole thing finishes in under a second.
+
+What this creates: I never manually load context. I just talk naturally. "I'm worried about rent" and Tyler has my full financial picture. "Should I text Riley back?" and Tyler has our conversation history. The right data appears at the right moment without me thinking about it.
+
+### Hook 3: Pre-Compact (The Anti-Amnesia Save)
+
+This hook is the most underappreciated. It fires when Claude's context window is about to compress.
+
+Here's the problem it solves. Long conversations eventually exceed the model's context limit. When that happens, Claude compresses (compacts) the context, summarizing earlier parts of the conversation to make room. Anything discussed early in a long session can get lost in that compression.
+
+The pre-compact hook prevents this by dumping the current session state to the daily note before compression happens. It captures:
+
+- The last 20 user messages (the substance of the conversation)
+- All files that were modified (Write/Edit tool calls)
+- The last assistant message (current task state)
+
+All of this gets written to the daily note as a "Pre-Compaction Save" entry. After compression, the information survives in the file system. The next session loads the daily note and picks up where things left off.
+
+It's a memory flush. Like saving your game before a boss fight. The context window might forget, but the files remember.
+
+### Hook 4: Session End
+
+Fires when a session closes. It only writes a summary if the session was "meaningful," defined as 3 or more tool calls. Quick questions don't clutter the daily notes.
+
+The summary includes:
+- Project name (from working directory)
+- Total tool call count
+- Number of files modified
+- The first user message (usually describes the task)
+- List of modified file paths (if 10 or fewer)
+
+It also appends a one-liner to `sessions.md` for quick lookup.
+
+This creates an automatic work log. When I start a session tomorrow, the daily note shows exactly what I worked on, how much work was done, and which files were touched.
+
+## The Telegram Daemon
+
+Claude Code runs in a terminal. The tyler-daemon extends Tyler to Telegram so I can message him from my phone.
+
+It's a TypeScript service built on the Grammy bot framework and Anthropic's Claude Agent SDK. It runs as a systemd user service: `systemctl --user status tyler-daemon`. Always on, always listening.
+
+The flow:
+1. I send a message on Telegram
+2. The daemon authenticates my user ID (only mine is allowed)
+3. The Claude Agent SDK processes the message with full tool access (file read/write, bash, web search, APIs)
+4. The response streams back with live edits so I can watch it generate
+5. Session continuity is maintained via the Agent SDK's resume feature
+
+The daemon also supports model switching. `/model opus` for complex reasoning, `/model sonnet` for quick tasks, `/model haiku` for fast answers. The preference persists in a local SQLite database.
+
+Same personality, same file access, same everything. Different interface.
+
+## The Cron Layer
+
+The daemon runs scheduled jobs using the `croner` library:
+
+| Time | Job | What It Does |
+|------|-----|-------------|
+| 8am PT | Morning briefing | Pulls daily context from LifeDirector, generates day overview |
+| 2pm PT | Habit check | Reviews health data, nudges on untracked habits |
+| 8pm PT | Evening reflection | Summarizes the day, notes patterns, saves to memory |
+| Sun 10am | Weekly summary | 7-day health, finance, and activity review |
+| Mon/Thu 11am | Relationship check-in | Suggests who to reach out to |
+| Every 4hr | Git backup | Commits and pushes workspace changes |
+| Hourly | SMS sync | Keeps message data current |
+| Daily midnight | Contacts sync | Syncs Google Contacts |
+| Every 30min | Tasks processing | Processes Google Tasks entries (food logs, workouts) |
+
+I wake up to a morning briefing. I get a nudge at 2pm if I haven't logged food. I get a day summary at 8pm. I didn't configure any of it after the initial setup. It just runs.
+
+## LifeDirector Integration
+
+LifeDirector is a separate app (Convex backend, Next.js PWA) that tracks health, habits, goals, and finances. Tyler pushes insights to it via HTTP endpoints and pulls context from it for the cron jobs.
+
+The integration is bidirectional. Tyler writes insight cards to LifeDirector (observations about patterns, suggestions, reminders). LifeDirector exposes a daily-context endpoint that Tyler's cron jobs consume for briefings and reflections.
+
+The key endpoint: `/tyler/daily-context` returns calendar events, habit status, recovery milestones, weather, recent insights, and goals. One call gives Tyler everything it needs for a comprehensive daily briefing.
+
+## How It Compares to ChatGPT Memory
+
+ChatGPT's memory feature stores a list of facts between sessions. "Justin prefers TypeScript." "Justin lives in Idaho." It's a key-value store with maybe 50-100 entries.
+
+Tyler's memory is thousands of lines of structured context across dozens of files. Financial breakdowns with exact account balances. Relationship histories with conversation analysis. Psychological patterns identified from journal entries. Daily logs going back weeks. All of it automatically loaded and updated by hooks.
+
+ChatGPT can't read your filesystem. Tyler can read and write any file on my machine. ChatGPT doesn't know what happened in your last five sessions. Tyler has daily notes documenting every meaningful session. ChatGPT can't run bash commands. Tyler can query APIs, search the web, modify code, and send emails.
+
+The gap isn't in the model. Both use frontier models. The gap is in context, integration, and persistence.
+
+## What Makes It Work
+
+The architecture is simple. Deliberately simple. Markdown files, bash scripts, a TypeScript daemon, and a Convex backend. No containers. No message queues. No microservices.
+
+The design principle: the right context at the right time. Every component exists to solve one problem: getting relevant information in front of the model when it matters.
+
+- Session start loads recent history so Tyler knows what happened
+- Smart context injects topic-specific data so I never explain my situation
+- Pre-compact saves state so long sessions don't lose information
+- Session end logs summaries so future sessions have a trail
+- Cron jobs push proactive insights so I don't have to ask
+- LifeDirector provides a structured data layer for health, habits, and goals
+
+None of these pieces are technically impressive on their own. A bash script that greps for keywords. A markdown file with account balances. A cron job that runs every 4 hours. The power is in how they compose. Together, they create an AI that feels like it actually knows you, not because the model is magic, but because the system is designed to give it exactly what it needs.
+
+If you're building something similar, start with the files and the session-start hook. Just loading yesterday's context into your next session will change how AI interactions feel. Add smart context next. Then the anti-amnesia save. Each layer makes the whole system meaningfully better.
+
+The daemon and cron jobs are the advanced layer. Start simple. A git repo, four bash scripts, and a markdown file. That's all Tyler was at the beginning.

@@ -32,7 +32,7 @@ export function Navbar() {
           href="/"
           className="text-lg font-semibold tracking-tight transition-colors hover:text-primary"
         >
-          Justin Tyler
+          Justin Angeles
         </Link>
 
         {/* Desktop nav */}

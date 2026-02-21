@@ -21,7 +21,7 @@ export async function GET() {
   const feed = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Justin Tyler</title>
+    <title>Justin Tyler Angeles</title>
     <link>${baseUrl}</link>
     <description>Health and wellness, software development, and AI integration. Articles on building, learning, and growing.</description>
     <language>en-us</language>

@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Justin Tyler | Health, Software, and AI",
-    template: "%s | Justin Tyler",
+    default: "Justin Angeles | Health, Software, and AI",
+    template: "%s | Justin Angeles",
   },
   description:
     "Health and wellness, software development, and AI integration. Sharing what I learn along the way.",
@@ -25,7 +25,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: "https://justintylers.com",
-    siteName: "Justin Tyler",
+    siteName: "Justin Angeles",
   },
   twitter: {
     card: "summary_large_image",

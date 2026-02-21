@@ -37,12 +37,10 @@ export default function HomePage() {
       <section className="py-24 sm:py-32">
         <div className="max-w-2xl">
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
-            Hey, I&apos;m Justin.
+            Justin Angeles.
           </h1>
           <p className="mt-6 text-lg leading-8 text-muted-foreground">
-            I&apos;m into health and wellness, software development, and AI
-            integration. Right now I&apos;m building tools, writing about what I
-            learn, and figuring out life one project at a time.
+             I&apos;m passionate about health &amp; wellness. I love people, about as extroverted as you can get. I spend most my time helping people improve their health and wellness with spa services. I also enjoy helping companies automate and improve their business processes using AI and building custom software.
           </p>
           <SocialLinks className="mt-6" />
           <div className="mt-8 flex gap-4">

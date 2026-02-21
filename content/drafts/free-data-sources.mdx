@@ -1,0 +1,89 @@
+---
+title: "5 Free Data Sources Most Businesses Don't Know About"
+description: "The data you're paying for is probably available for free. Here are 5 public data sources and how to actually use them."
+publishedAt: "2026-02-20"
+category: "business"
+tags: ["data", "lead-generation", "free-tools", "web-scraping"]
+featured: false
+draft: true
+---
+
+There's a good chance the data your business pays for is available for free. Not "free trial" free. Not "free but we sell your info" free. Actually free. Published by government agencies. Updated regularly. Sitting on public websites that most people never think to check.
+
+I know because I built a 1.4 million record lead generation platform almost entirely from free public data. My client was paying a data broker $3 per lead. Now he generates his own for free.
+
+Here are five sources worth knowing about.
+
+## 1. State Licensing Boards
+
+Every state requires contractors, electricians, plumbers, builders, and dozens of other trades to hold a license. That licensing data, business name, license type, address, sometimes phone and email, is public record.
+
+California's Contractors State License Board has every licensed contractor in the state. Florida's DBPR portal covers everything from general contractors to mold assessors. Texas organizes by county. North Carolina requires querying by zip code with a radius search.
+
+I scraped 15+ states and pulled 1.4 million contractor records. Business names, license types, license numbers, addresses, and in many cases phone numbers and emails. All public. All free.
+
+The data is messy. Every state formats things differently. Some use modern APIs, some use ASP.NET forms from the late 90s, some require JavaScript rendering. But the data is there.
+
+If you sell to licensed professionals (tools, insurance, materials, services), this is your lead list. You just have to go get it.
+
+## 2. Secretary of State Business Databases
+
+Every registered business in America is on file with its state's Secretary of State. Business name, registered agent, filing date, business type, registered address, status (active, dissolved, suspended). Available in all 50 states.
+
+This is powerful for a few reasons. You can find every LLC formed in a state in the last 90 days, which means brand new businesses that probably need services. You can verify that a company you're about to work with actually exists and is in good standing. You can find the registered agent for a company you need to serve legal papers to.
+
+Most of these databases have free online search. Some states offer bulk download options. Delaware, where half the companies in America are incorporated, has a full online search portal.
+
+If you're targeting new businesses (accounting firms, marketing agencies, SaaS products), this is your early-warning system for new prospects.
+
+## 3. County Assessor Records
+
+Your local county assessor's office maintains records on every property in the county. Owner name, assessed value, last sale date, last sale price, property type, square footage, lot size, year built.
+
+This is a gold mine for real estate, construction, home services, and insurance. A roofing company can find every house built before 1990 (likely needs a new roof). A real estate investor can find properties that haven't sold in 20+ years (potential motivated sellers). A home remodeler can target houses with assessments under a certain value in high-value neighborhoods (likely due for upgrades).
+
+Most counties publish this data through GIS portals or online search tools. Some larger counties have downloadable datasets. The data format varies wildly, but the information is consistently available.
+
+The key insight: property data tells you what someone owns, how long they've owned it, and roughly what it's worth. That's intent data hiding in plain sight.
+
+## 4. Court Records (PACER and State Courts)
+
+Federal court records are available through PACER (Public Access to Court Electronic Records). Filing fees are minimal. State court records are typically available through individual county clerk websites.
+
+This covers civil cases, bankruptcies, liens, judgments, and criminal records. The business applications are real:
+
+Collections and credit companies use this to assess risk. Insurance companies check for litigation history. Background screening services pull court records as a core data source. Due diligence on potential business partners or acquisition targets almost always includes court record searches.
+
+PACER charges $0.10 per page with a $3 cap per document. Many state courts offer free online search. The data isn't pretty, but it's authoritative.
+
+## 5. USDA and FDA Databases
+
+This one's less obvious but incredibly valuable if you're in food, health, or wellness.
+
+The USDA publishes comprehensive nutritional data for over 460,000 foods. Every vitamin, every mineral, every macronutrient. Brand-name products, raw ingredients, restaurant items. I downloaded the entire USDA FoodData Central dataset and built a local SQLite database with full-text search. Now I can look up the complete nutritional profile of any food in milliseconds without hitting an API.
+
+The FDA publishes ingredient safety data, drug interaction databases, food additive approvals, and adverse event reports. If you're building a health app, a supplement company, or a food product, this data is foundational.
+
+I used the USDA data to build food tracking features into my personal dashboard, LifeDirector. The same data powers nutritional analysis in Spa Science Lab, an educational platform I built for the spa and wellness industry. Zero data licensing costs.
+
+## The Catch
+
+These databases are ugly. They're slow. They're scattered across 50 different websites with 50 different formats and interfaces. Some have CAPTCHA. Some paginate results 10 at a time. Some only let you search by one field. Some go down for maintenance in the middle of your scrape.
+
+Nobody's hiding this data. It's public by design. But it's not packaged for easy consumption. That's by default, not by intent. Government websites weren't built for bulk data extraction.
+
+That's exactly where custom software comes in.
+
+## Turning Raw Data Into a Business Asset
+
+The gap between "this data exists" and "this data is useful" is a scraper, a cleaning pipeline, and a delivery mechanism.
+
+For my lead generation platform, the pipeline looks like this: Python scrapers collect raw data from state websites. A normalization layer standardizes the formats (every state's data looks different). Phone enrichment fills in missing contact info. Deduplication catches records that appear in multiple databases. The clean data lands in a CRM where my client can filter, search, and export.
+
+My client was paying $3 per lead from a broker. Those leads were probably scraped from the same public databases I'm using. The broker just got there first and charged a markup.
+
+Now my client generates his own leads for the cost of the infrastructure to run the scrapers. The data is fresher because he controls the update schedule. The coverage is broader because we can add new states whenever he needs them.
+
+The lesson: if you're paying for data, check whether the source is public first. There's a decent chance someone is reselling you information that's available for free. The value they're adding is collection and formatting. That's worth paying for if you can't build it yourself. But if you can, the margins are yours.
+
+Every one of these five sources is sitting on a government website right now, waiting for someone to build something useful on top of it.

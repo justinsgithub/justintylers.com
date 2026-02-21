@@ -2,7 +2,7 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "Justin Tyler",
+    name: "Justin Tyler Angeles",
     short_name: "JT",
     description:
       "Health and wellness, software development, and AI integration.",
