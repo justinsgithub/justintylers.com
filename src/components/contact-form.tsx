@@ -83,7 +83,7 @@ export function ContactForm() {
             name="email"
             type="email"
             required
-            placeholder="you@company.com"
+            placeholder="you@example.com"
           />
         </div>
       </div>
@@ -103,6 +103,7 @@ export function ContactForm() {
             <SelectItem value="custom-software">Custom Business Software</SelectItem>
             <SelectItem value="ai-integration">AI Integration</SelectItem>
             <SelectItem value="web-application">Web Application</SelectItem>
+            <SelectItem value="data-scraping">Data Scraping</SelectItem>
             <SelectItem value="other">Other</SelectItem>
           </SelectContent>
         </Select>

@@ -4,7 +4,7 @@ import { NewsletterSignup } from "@/components/newsletter-signup";
 export const metadata: Metadata = {
   title: "Newsletter",
   description:
-    "Get my sometimes good, sometimes ridiculous ideas straight to your inbox.",
+    "Get my hot takes and obnoxious ideas straight to your inbox.",
 };
 
 export default function NewsletterPage() {
@@ -14,8 +14,7 @@ export default function NewsletterPage() {
         Newsletter
       </h1>
       <p className="mt-3 text-lg text-muted-foreground">
-        Get my sometimes good, sometimes ridiculous ideas straight to your
-        inbox.
+        Get my hot takes and obnoxious ideas straight to your inbox.
       </p>
 
       <div className="mt-10 space-y-6">

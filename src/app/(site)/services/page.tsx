@@ -52,7 +52,7 @@ const services = [
     description:
       "Full-stack web apps built to your exact specifications. Not templates. Not page builders. Real software that does exactly what you need.",
     features: [
-      "Modern React front-end",
+      "Clean, modern interface",
       "Real-time database",
       "Authentication and user management",
       "Mobile-responsive design",
@@ -73,7 +73,7 @@ const process = [
     step: "2",
     title: "Plan",
     description:
-      "I scope the project, define deliverables, and give you a fixed quote.",
+      "I'll map out what we're building and what it'll cost. No surprises.",
   },
   {
     icon: Wrench,
@@ -98,8 +98,9 @@ export default function ServicesPage() {
         Services
       </h1>
       <p className="mt-3 text-lg text-muted-foreground">
-        Custom software and AI integration for businesses that want to work
-        smarter. No agencies, no overhead. Just one developer who ships.
+        Tired of manual data entry, messy spreadsheets, and repetitive tasks
+        that eat up your day? I build custom software and automations so you
+        can focus on what you&apos;re best at.
       </p>
 
       {/* Service Cards */}
@@ -156,10 +157,10 @@ export default function ServicesPage() {
       {/* CTA */}
       <section className="mt-20 rounded-xl border border-primary/20 bg-primary/5 p-8 text-center sm:p-12">
         <h2 className="text-2xl font-bold tracking-tight">
-          Ready to build something?
+          Have an idea?
         </h2>
         <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-          Tell me what you need. I&apos;ll tell you what it takes.
+          Tell me what you&apos;re thinking and let&apos;s figure out the best way to build it.
         </p>
         <Link href="/contact" className="mt-6 inline-block">
           <Button size="lg">

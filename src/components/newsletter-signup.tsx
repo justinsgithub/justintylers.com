@@ -19,6 +19,11 @@ export function NewsletterSignup({ source = "page" }: { source?: string }) {
 
     try {
       await subscribe({ email, source });
+      fetch("/api/newsletter", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
       setSubmitted(true);
     } catch {
       // silent fail

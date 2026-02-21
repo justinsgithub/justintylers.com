@@ -25,10 +25,10 @@ export default function ContactPage() {
         <p>
           Or email me directly:{" "}
           <a
-            href="mailto:justinaawd@gmail.com"
+            href="mailto:justin@justintylers.com"
             className="text-primary underline underline-offset-2"
           >
-            justinaawd@gmail.com
+            justin@justintylers.com
           </a>
         </p>
       </div>
