@@ -104,7 +104,7 @@ export default async function ArticlePage({
         <p className="mt-2 text-muted-foreground">
           Get notified when I publish new articles or launch new projects.
         </p>
-        <Link href="/newsletter" className="mt-4 inline-block">
+        <Link href="/subscribe" className="mt-4 inline-block">
           <Button>Subscribe for updates</Button>
         </Link>
       </div>

@@ -51,7 +51,7 @@ export function Navbar() {
               {link.label}
             </Link>
           ))}
-          <Link href="/newsletter" className="ml-2">
+          <Link href="/subscribe" className="ml-2">
             <Button size="sm" className="h-8">
               Subscribe
             </Button>
@@ -86,7 +86,7 @@ export function Navbar() {
                 </Link>
               ))}
               <Link
-                href="/newsletter"
+                href="/subscribe"
                 onClick={() => setOpen(false)}
                 className="mt-4 px-3"
               >

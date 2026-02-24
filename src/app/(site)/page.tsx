@@ -114,7 +114,7 @@ export default function HomePage() {
             Get notified when I publish new articles or launch new projects.
           </p>
           <div className="mx-auto mt-6 flex max-w-sm gap-3">
-            <Link href="/newsletter" className="w-full">
+            <Link href="/subscribe" className="w-full">
               <Button className="w-full">Subscribe for updates</Button>
             </Link>
           </div>
