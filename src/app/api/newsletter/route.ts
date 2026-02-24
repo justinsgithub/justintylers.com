@@ -8,12 +8,12 @@ export async function POST(request: Request) {
     const { email } = await request.json();
 
     await resend.emails.send({
-      from: "Justin Tyler <hello@mail.justintylers.com>",
+      from: "Justin Angeles <hello@mail.justintylers.com>",
       to: email,
-      subject: "Welcome to the newsletter",
+      subject: "You're on the list",
       html: `
         <p>Hey, thanks for subscribing.</p>
-        <p>I write about health, software, AI, and whatever else I'm learning along the way. No set schedule, just when I have something worth sharing.</p>
+        <p>I'll send you an email when I publish new articles or launch new projects. That's it. No spam.</p>
         <p>If you ever want to reach me directly, just reply to this email.</p>
         <p>– Justin</p>
       `,

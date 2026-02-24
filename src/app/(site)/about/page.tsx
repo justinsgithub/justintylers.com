@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Justin Tyler Angeles: health and wellness, software development, and AI integration. From Alaska to building tools and figuring it out.",
+    "Justin Angeles: health and wellness, software development, and AI integration. From Alaska to building tools and figuring it out.",
 };
 
 export default function AboutPage() {
@@ -18,7 +18,7 @@ export default function AboutPage() {
 
       <div className="prose mt-10">
         <p className="text-lg leading-8 text-muted-foreground">
-          I&apos;m Justin Tyler Angeles. I&apos;m into health and wellness,
+          I&apos;m Justin Angeles. I&apos;m into health and wellness,
           software development, and AI integration.
         </p>
 

@@ -104,19 +104,18 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Newsletter */}
+      {/* Subscribe */}
       <section className="pb-24">
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-8 text-center sm:p-12">
           <h2 className="text-2xl font-bold tracking-tight">
-            Stay in the loop
+            Stay Updated
           </h2>
           <p className="mx-auto mt-3 max-w-md text-muted-foreground">
-            I write about health, software, AI, and what I&apos;m learning along
-            the way. No spam.
+            Get notified when I publish new articles or launch new projects.
           </p>
           <div className="mx-auto mt-6 flex max-w-sm gap-3">
             <Link href="/newsletter" className="w-full">
-              <Button className="w-full">Subscribe to newsletter</Button>
+              <Button className="w-full">Subscribe for updates</Button>
             </Link>
           </div>
         </div>

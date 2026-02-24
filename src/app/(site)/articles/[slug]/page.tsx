@@ -36,7 +36,7 @@ export async function generateMetadata({
       description: article.frontmatter.description,
       type: "article",
       publishedTime: article.frontmatter.publishedAt,
-      authors: ["Justin Tyler Angeles"],
+      authors: ["Justin Angeles"],
     },
   };
 }
@@ -98,14 +98,14 @@ export default async function ArticlePage({
         </div>
       </article>
 
-      {/* Newsletter CTA */}
+      {/* Subscribe CTA */}
       <div className="mt-16 rounded-xl border border-primary/20 bg-primary/5 p-8 text-center">
-        <h3 className="text-xl font-bold">Enjoyed this article?</h3>
+        <h3 className="text-xl font-bold">Want to stay in the loop?</h3>
         <p className="mt-2 text-muted-foreground">
-          Get more like it delivered to your inbox.
+          Get notified when I publish new articles or launch new projects.
         </p>
         <Link href="/newsletter" className="mt-4 inline-block">
-          <Button>Subscribe to newsletter</Button>
+          <Button>Subscribe for updates</Button>
         </Link>
       </div>
     </div>

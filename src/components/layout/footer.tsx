@@ -45,7 +45,7 @@ export function Footer() {
         <Separator className="my-8" />
 
         <p className="text-center text-sm text-muted-foreground">
-          &copy; {new Date().getFullYear()} Justin Tyler Angeles. All rights
+          &copy; {new Date().getFullYear()} Justin Angeles. All rights
           reserved.
         </p>
       </div>
