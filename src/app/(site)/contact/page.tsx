@@ -14,7 +14,25 @@ export default function ContactPage() {
         Get in Touch
       </h1>
       <p className="mt-3 text-lg text-muted-foreground">
-        Tell me what you need. I respond within 24 hours.
+        Tell me what you need. You can also reach me on{" "}
+        <a
+          href="https://www.linkedin.com/in/justintangeles"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline underline-offset-2"
+        >
+          LinkedIn
+        </a>{" "}
+        or{" "}
+        <a
+          href="https://www.facebook.com/justintangeles"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-primary underline underline-offset-2"
+        >
+          Facebook
+        </a>
+        .
       </p>
 
       <div className="mt-10">

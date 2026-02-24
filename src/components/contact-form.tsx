@@ -63,7 +63,7 @@ export function ContactForm() {
       <div className="rounded-xl border border-primary/20 bg-primary/5 p-8 text-center">
         <h3 className="text-xl font-bold">Message sent!</h3>
         <p className="mt-2 text-muted-foreground">
-          I&apos;ll get back to you within 24 hours.
+          I&apos;ll be in touch soon.
         </p>
       </div>
     );
