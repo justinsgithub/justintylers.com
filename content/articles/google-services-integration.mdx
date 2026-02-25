@@ -21,11 +21,11 @@ Then I found `gog`.
 Every command takes the same account flag:
 
 ```bash
-gog cal events justinaawd@gmail.com -a justinaawd@gmail.com --today
-gog tasks list LIST_ID -a justinaawd@gmail.com
-gog gmail search "from:someone@email.com" -a justinaawd@gmail.com
-gog contacts search "John" -a justinaawd@gmail.com
-gog drive search "budget" -a justinaawd@gmail.com
+gog cal events justin@justintylers.com -a justin@justintylers.com --today
+gog tasks list LIST_ID -a justin@justintylers.com
+gog gmail search "from:someone@email.com" -a justin@justintylers.com
+gog contacts search "John" -a justin@justintylers.com
+gog drive search "budget" -a justin@justintylers.com
 ```
 
 That's it. No OAuth dance. No refresh token logic. No custom middleware. The `-j` flag gives you JSON output for scripting, `-p` gives you TSV for parsing. Tyler can call any of these and get structured data back.
@@ -38,13 +38,13 @@ Calendar is how Tyler knows what my day looks like. The morning briefing cron jo
 
 ```bash
 # Today's events
-gog cal events justinaawd@gmail.com -a justinaawd@gmail.com --today
+gog cal events justin@justintylers.com -a justin@justintylers.com --today
 
 # This week
-gog cal events justinaawd@gmail.com -a justinaawd@gmail.com --week
+gog cal events justin@justintylers.com -a justin@justintylers.com --week
 
 # Create an event
-gog cal create justinaawd@gmail.com -a justinaawd@gmail.com \
+gog cal create justin@justintylers.com -a justin@justintylers.com \
   --title "Dentist" \
   --from "2026-03-01T14:00:00" \
   --to "2026-03-01T15:00:00"
@@ -87,8 +87,8 @@ The key insight: Google Tasks is available on every phone, works offline, and sy
 Tyler can search my email and send messages through Gmail. This is mostly used for notifications back to me. When Tyler finishes a long task, hits a blocker, or makes a git commit while I'm away, it sends me an email summary.
 
 ```bash
-gog gmail send -a justinaawd@gmail.com \
-  --to "justinaawd@gmail.com" \
+gog gmail send -a justin@justintylers.com \
+  --to "justin@justintylers.com" \
   --subject "[project] Task complete" \
   --body "Here's what happened..."
 ```

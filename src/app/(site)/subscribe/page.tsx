@@ -14,7 +14,7 @@ export default function NewsletterPage() {
         Stay Updated
       </h1>
       <p className="mt-3 text-lg text-muted-foreground">
-        Get notified when I publish new articles or launch new projects. No spam, no fluff.
+        Get notified when I publish new articles or launch new projects.
       </p>
 
       <div className="mt-10">

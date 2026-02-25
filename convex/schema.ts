@@ -35,4 +35,57 @@ export default defineSchema({
   })
     .index("by_article", ["articleSlug"])
     .index("by_visitor_article", ["visitorId", "articleSlug"]),
+
+  socialDrafts: defineTable({
+    userId: v.id("users"),
+    groupId: v.string(),
+    sortOrder: v.number(),
+
+    title: v.string(),
+    platform: v.union(
+      v.literal("linkedin"),
+      v.literal("twitter"),
+      v.literal("instagram"),
+      v.literal("facebook")
+    ),
+    content: v.string(),
+    hashtags: v.optional(v.array(v.string())),
+
+    mediaIds: v.optional(v.array(v.id("_storage"))),
+
+    articleSlug: v.optional(v.string()),
+    articleUrl: v.optional(v.string()),
+    articleTitle: v.optional(v.string()),
+
+    status: v.union(
+      v.literal("draft"),
+      v.literal("review"),
+      v.literal("approved"),
+      v.literal("scheduled"),
+      v.literal("published"),
+      v.literal("archived")
+    ),
+    scheduledFor: v.optional(v.number()),
+    scheduledDate: v.optional(v.string()),
+    scheduledTime: v.optional(v.string()),
+
+    publishedAt: v.optional(v.number()),
+    publishedPostId: v.optional(v.string()),
+    publishedUrl: v.optional(v.string()),
+
+    characterCount: v.optional(v.number()),
+    photoNeeded: v.optional(v.string()),
+    notes: v.optional(v.string()),
+    source: v.optional(v.string()),
+    createdBy: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_userId", ["userId"])
+    .index("by_userId_status", ["userId", "status"])
+    .index("by_userId_platform", ["userId", "platform"])
+    .index("by_userId_scheduledDate", ["userId", "scheduledDate"])
+    .index("by_groupId", ["groupId"])
+    .index("by_userId_sortOrder", ["userId", "sortOrder"])
+    .index("by_userId_articleSlug", ["userId", "articleSlug"]),
 });

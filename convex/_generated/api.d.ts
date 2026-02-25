@@ -10,7 +10,9 @@
 
 import type * as contacts from "../contacts.js";
 import type * as engagement from "../engagement.js";
+import type * as http from "../http.js";
 import type * as lib_auth from "../lib/auth.js";
+import type * as socialDrafts from "../socialDrafts.js";
 import type * as subscribers from "../subscribers.js";
 import type * as users from "../users.js";
 
@@ -23,7 +25,9 @@ import type {
 declare const fullApi: ApiFromModules<{
   contacts: typeof contacts;
   engagement: typeof engagement;
+  http: typeof http;
   "lib/auth": typeof lib_auth;
+  socialDrafts: typeof socialDrafts;
   subscribers: typeof subscribers;
   users: typeof users;
 }>;
