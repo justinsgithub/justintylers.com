@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as articles from "../articles.js";
 import type * as contacts from "../contacts.js";
 import type * as engagement from "../engagement.js";
 import type * as http from "../http.js";
@@ -23,6 +24,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  articles: typeof articles;
   contacts: typeof contacts;
   engagement: typeof engagement;
   http: typeof http;

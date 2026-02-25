@@ -474,6 +474,34 @@ export const removeMedia = mutation({
   },
 });
 
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    await requireCurrentUser(ctx);
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+export const getMediaUrls = query({
+  args: { storageIds: v.array(v.id("_storage")) },
+  handler: async (ctx, args) => {
+    await requireCurrentUser(ctx);
+    const urls: Record<string, string | null> = {};
+    for (const id of args.storageIds) {
+      urls[id] = await ctx.storage.getUrl(id);
+    }
+    return urls;
+  },
+});
+
+export const deleteMedia = mutation({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, args) => {
+    await requireCurrentUser(ctx);
+    await ctx.storage.delete(args.storageId);
+  },
+});
+
 // ============================================================
 // INTERNAL (Tyler HTTP endpoints)
 // ============================================================

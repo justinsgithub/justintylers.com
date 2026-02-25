@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
@@ -9,6 +9,7 @@ import { PlatformBadge } from "@/components/admin/social/platform-badge";
 import { StatusBadge } from "@/components/admin/social/status-badge";
 import { CharCounter } from "@/components/admin/social/char-counter";
 import { ArticleSlugPicker } from "@/components/admin/social/article-slug-picker";
+import { MediaUpload } from "@/components/admin/social/media-upload";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -51,17 +52,13 @@ export default function EditDraftPage() {
   const [articleTitle, setArticleTitle] = useState<string | undefined>();
   const [photoNeeded, setPhotoNeeded] = useState("");
   const [notes, setNotes] = useState("");
-  const [articles, setArticles] = useState<{ slug: string; title: string }[]>(
-    []
-  );
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => {
-    fetch("/api/articles")
-      .then((r) => r.json())
-      .then(setArticles)
-      .catch(() => {});
-  }, []);
+  const articlesData = useQuery(api.articles.list, { includeDrafts: true });
+  const articles = useMemo(
+    () => (articlesData ?? []).map((a) => ({ slug: a.slug, title: a.title })),
+    [articlesData]
+  );
 
   useEffect(() => {
     if (draft) {
@@ -223,6 +220,16 @@ export default function EditDraftPage() {
             <Input
               value={photoNeeded}
               onChange={(e) => setPhotoNeeded(e.target.value)}
+            />
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">
+              Photos
+            </label>
+            <MediaUpload
+              draftId={draftId}
+              mediaIds={draft.mediaIds ?? []}
             />
           </div>
 

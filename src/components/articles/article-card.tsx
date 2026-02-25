@@ -6,6 +6,7 @@ const categoryLabels: Record<string, string> = {
   tech: "Tech & AI",
   business: "Business",
   philosophy: "Philosophy",
+  health: "Health & Wellbeing",
 };
 
 export function ArticleCard({ article }: { article: ArticleMeta }) {

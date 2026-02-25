@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useMutation } from "convex/react";
+import { useState, useMemo } from "react";
+import { useMutation, useQuery } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
 import { SideBySideEditor } from "@/components/admin/social/side-by-side-editor";
 import { ArticleSlugPicker } from "@/components/admin/social/article-slug-picker";
@@ -19,11 +19,6 @@ import { type Platform, type Status } from "@/lib/social-constants";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 
-interface ArticleOption {
-  slug: string;
-  title: string;
-}
-
 export default function NewPostPage() {
   const router = useRouter();
   const createDraft = useMutation(api.socialDrafts.createDraft);
@@ -34,8 +29,13 @@ export default function NewPostPage() {
   const [photoNeeded, setPhotoNeeded] = useState("");
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState<Status>("draft");
-  const [articles, setArticles] = useState<ArticleOption[]>([]);
   const [saving, setSaving] = useState(false);
+
+  const articlesData = useQuery(api.articles.list, { includeDrafts: true });
+  const articles = useMemo(
+    () => (articlesData ?? []).map((a) => ({ slug: a.slug, title: a.title })),
+    [articlesData]
+  );
 
   const [content, setContent] = useState({
     linkedin: "",
@@ -43,13 +43,6 @@ export default function NewPostPage() {
     instagram: "",
     facebook: "",
   });
-
-  useEffect(() => {
-    fetch("/api/articles")
-      .then((r) => r.json())
-      .then((data) => setArticles(data))
-      .catch(() => {});
-  }, []);
 
   const handleContentChange = (platform: Platform, value: string) => {
     setContent((prev) => ({ ...prev, [platform]: value }));

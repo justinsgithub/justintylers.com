@@ -12,6 +12,23 @@ export default defineSchema({
     .index("by_clerk_id", ["clerkId"])
     .index("by_email", ["email"]),
 
+  articles: defineTable({
+    slug: v.string(),
+    title: v.string(),
+    description: v.string(),
+    category: v.string(),
+    tags: v.array(v.string()),
+    publishedAt: v.string(),
+    featured: v.boolean(),
+    draft: v.boolean(),
+    image: v.optional(v.string()),
+    readingTime: v.optional(v.string()),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+  })
+    .index("by_slug", ["slug"])
+    .index("by_category", ["category"]),
+
   contacts: defineTable({
     name: v.string(),
     email: v.string(),

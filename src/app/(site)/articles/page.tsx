@@ -5,7 +5,7 @@ import { ArticlesList } from "@/components/articles/articles-list";
 export const metadata: Metadata = {
   title: "Articles",
   description:
-    "Writing about whatever I'm into at the moment, including AI, software, and maybe a little philosophy.",
+    "Exploring tech & AI, business, philosophy, and health & wellbeing.",
 };
 
 export default function ArticlesPage() {
@@ -17,8 +17,8 @@ export default function ArticlesPage() {
         Articles
       </h1>
       <p className="mt-3 text-lg text-muted-foreground">
-        Writing about whatever I&apos;m into at the moment, including AI,
-        software, and maybe a little philosophy.
+        Exploring tech &amp; AI, business, philosophy, and health &amp;
+        wellbeing.
       </p>
       <div className="mt-10">
         <ArticlesList articles={articles} />
