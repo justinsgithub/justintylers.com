@@ -4,7 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ArticleCard } from "@/components/articles/article-card";
 import { SocialLinks } from "@/components/social-links";
-import { getAllArticles } from "@/lib/mdx";
+import { fetchQuery } from "convex/nextjs";
+import { api } from "../../../convex/_generated/api";
 
 const projects = [
   {
@@ -30,7 +31,16 @@ const projects = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  const articles = await fetchQuery(api.articles.list, {});
+  const latestArticles = articles.slice(0, 3).map((a) => ({
+    slug: a.slug,
+    title: a.title,
+    description: a.description,
+    category: a.category,
+    readingTime: a.readingTime || "",
+    publishedAt: a.publishedAt,
+  }));
   return (
     <div className="mx-auto max-w-5xl px-6">
       {/* Hero */}
@@ -96,9 +106,7 @@ export default function HomePage() {
           </Link>
         </div>
         <div className="mt-8 grid gap-4">
-          {getAllArticles()
-            .slice(0, 3)
-            .map((article) => (
+          {latestArticles.map((article) => (
               <ArticleCard key={article.slug} article={article} />
             ))}
         </div>

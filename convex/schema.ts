@@ -23,6 +23,9 @@ export default defineSchema({
     draft: v.boolean(),
     image: v.optional(v.string()),
     readingTime: v.optional(v.string()),
+    content: v.optional(v.string()),
+    contentMarkdown: v.optional(v.string()),
+    contentHtml: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })

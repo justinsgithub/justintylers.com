@@ -1,13 +1,14 @@
 import { MetadataRoute } from "next";
-import { getAllArticles } from "@/lib/mdx";
+import { fetchQuery } from "convex/nextjs";
+import { api } from "../../convex/_generated/api";
 
-export default function sitemap(): MetadataRoute.Sitemap {
-  const articles = getAllArticles();
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  const articles = await fetchQuery(api.articles.list, {});
   const baseUrl = "https://justintylers.com";
 
   const articleUrls = articles.map((article) => ({
     url: `${baseUrl}/articles/${article.slug}`,
-    lastModified: new Date(article.frontmatter.publishedAt),
+    lastModified: new Date(article.publishedAt),
     changeFrequency: "monthly" as const,
     priority: 0.8,
   }));

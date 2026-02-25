@@ -231,11 +231,11 @@ http.route({
 });
 
 // ============================================================
-// TYLER - ARTICLES SYNC
+// TYLER - ARTICLES CRUD
 // ============================================================
 
 http.route({
-  path: "/tyler/sync-articles",
+  path: "/tyler/articles",
   method: "OPTIONS",
   handler: httpAction(async () => {
     return new Response(null, { status: 204, headers: corsHeaders });
@@ -243,7 +243,34 @@ http.route({
 });
 
 http.route({
-  path: "/tyler/sync-articles",
+  path: "/tyler/articles",
+  method: "GET",
+  handler: httpAction(async (ctx, request) => {
+    const validation = await validateTylerApiKey(request);
+    if (!validation.valid) {
+      return new Response(JSON.stringify({ error: validation.error }), {
+        status: 401,
+        headers: corsHeaders,
+      });
+    }
+
+    const url = new URL(request.url);
+    const draftParam = url.searchParams.get("draft");
+    const includeDrafts = draftParam === "true";
+
+    const articles = await ctx.runQuery(internal.articles.listInternal, {
+      includeDrafts,
+    });
+
+    return new Response(JSON.stringify({ success: true, data: articles }), {
+      status: 200,
+      headers: corsHeaders,
+    });
+  }),
+});
+
+http.route({
+  path: "/tyler/articles",
   method: "POST",
   handler: httpAction(async (ctx, request) => {
     const validation = await validateTylerApiKey(request);
@@ -266,6 +293,9 @@ http.route({
         draft: boolean;
         image?: string;
         readingTime?: string;
+        content?: string;
+        contentMarkdown?: string;
+        contentHtml?: string;
       }>;
     };
 
@@ -295,6 +325,45 @@ http.route({
       JSON.stringify({ success: true, synced }),
       { status: 200, headers: corsHeaders }
     );
+  }),
+});
+
+http.route({
+  path: "/tyler/articles",
+  method: "PATCH",
+  handler: httpAction(async (ctx, request) => {
+    const validation = await validateTylerApiKey(request);
+    if (!validation.valid) {
+      return new Response(JSON.stringify({ error: validation.error }), {
+        status: 401,
+        headers: corsHeaders,
+      });
+    }
+
+    const body = await request.json();
+    const updates = body.updates;
+    if (!Array.isArray(updates) || updates.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "updates array required" }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    let updated = 0;
+    for (const update of updates) {
+      const { id, ...fields } = update;
+      if (!id) continue;
+      await ctx.runMutation(internal.articles.updateFromTyler, {
+        id: id as Id<"articles">,
+        ...fields,
+      });
+      updated++;
+    }
+
+    return new Response(JSON.stringify({ success: true, updated }), {
+      status: 200,
+      headers: corsHeaders,
+    });
   }),
 });
 

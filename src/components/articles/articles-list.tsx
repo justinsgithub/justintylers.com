@@ -4,7 +4,15 @@ import { useState } from "react";
 import { ArticleCard } from "./article-card";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import type { ArticleMeta } from "@/lib/mdx";
+
+export interface ArticleListItem {
+  slug: string;
+  title: string;
+  description: string;
+  category: string;
+  readingTime: string;
+  publishedAt: string;
+}
 
 const categories = [
   { value: "all", label: "All" },
@@ -14,13 +22,13 @@ const categories = [
   { value: "health", label: "Health & Wellbeing" },
 ];
 
-export function ArticlesList({ articles }: { articles: ArticleMeta[] }) {
+export function ArticlesList({ articles }: { articles: ArticleListItem[] }) {
   const [active, setActive] = useState("all");
 
   const filtered =
     active === "all"
       ? articles
-      : articles.filter((a) => a.frontmatter.category === active);
+      : articles.filter((a) => a.category === active);
 
   return (
     <div>

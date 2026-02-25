@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
-import type { ArticleMeta } from "@/lib/mdx";
+import type { ArticleListItem } from "./articles-list";
 
 const categoryLabels: Record<string, string> = {
   tech: "Tech & AI",
@@ -9,8 +9,8 @@ const categoryLabels: Record<string, string> = {
   health: "Health & Wellbeing",
 };
 
-export function ArticleCard({ article }: { article: ArticleMeta }) {
-  const { slug, frontmatter, readingTime } = article;
+export function ArticleCard({ article }: { article: ArticleListItem }) {
+  const { slug, title, description, category, readingTime, publishedAt } = article;
 
   return (
     <Link
@@ -19,11 +19,11 @@ export function ArticleCard({ article }: { article: ArticleMeta }) {
     >
       <div className="flex items-center gap-3 text-sm text-muted-foreground">
         <Badge variant="secondary" className="text-xs">
-          {categoryLabels[frontmatter.category] || frontmatter.category}
+          {categoryLabels[category] || category}
         </Badge>
-        <span>{readingTime}</span>
+        {readingTime && <span>{readingTime}</span>}
         <span>
-          {new Date(frontmatter.publishedAt).toLocaleDateString("en-US", {
+          {new Date(publishedAt).toLocaleDateString("en-US", {
             month: "short",
             day: "numeric",
             year: "numeric",
@@ -31,10 +31,10 @@ export function ArticleCard({ article }: { article: ArticleMeta }) {
         </span>
       </div>
       <h3 className="mt-3 text-lg font-semibold tracking-tight group-hover:text-primary transition-colors">
-        {frontmatter.title}
+        {title}
       </h3>
       <p className="mt-2 text-sm text-muted-foreground line-clamp-2">
-        {frontmatter.description}
+        {description}
       </p>
     </Link>
   );

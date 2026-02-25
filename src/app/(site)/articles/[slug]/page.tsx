@@ -4,7 +4,8 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { MDXRemote } from "next-mdx-remote/rsc";
 import rehypeSlug from "rehype-slug";
-import { getArticleBySlug, getAllSlugs } from "@/lib/mdx";
+import { fetchQuery } from "convex/nextjs";
+import { api } from "../../../../../convex/_generated/api";
 import { mdxComponents } from "@/components/articles/mdx-components";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,8 @@ const categoryLabels: Record<string, string> = {
 };
 
 export async function generateStaticParams() {
-  return getAllSlugs().map((slug) => ({ slug }));
+  const slugs = await fetchQuery(api.articles.getAllSlugs, {});
+  return slugs.map((slug) => ({ slug }));
 }
 
 export async function generateMetadata({
@@ -25,17 +27,17 @@ export async function generateMetadata({
   params: Promise<{ slug: string }>;
 }): Promise<Metadata> {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
+  const article = await fetchQuery(api.articles.getBySlug, { slug });
   if (!article) return {};
 
   return {
-    title: article.frontmatter.title,
-    description: article.frontmatter.description,
+    title: article.title,
+    description: article.description,
     openGraph: {
-      title: article.frontmatter.title,
-      description: article.frontmatter.description,
+      title: article.title,
+      description: article.description,
       type: "article",
-      publishedTime: article.frontmatter.publishedAt,
+      publishedTime: article.publishedAt,
       authors: ["Justin Angeles"],
     },
   };
@@ -47,10 +49,10 @@ export default async function ArticlePage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const article = getArticleBySlug(slug);
-  if (!article) notFound();
+  const article = await fetchQuery(api.articles.getBySlug, { slug });
+  if (!article || article.draft) notFound();
 
-  const { frontmatter, content, readingTime } = article;
+  const content = article.contentMarkdown || "";
 
   return (
     <div className="mx-auto max-w-3xl px-6 py-16">
@@ -66,11 +68,11 @@ export default async function ArticlePage({
         <header>
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <Badge variant="secondary">
-              {categoryLabels[frontmatter.category] || frontmatter.category}
+              {categoryLabels[article.category] || article.category}
             </Badge>
-            <span>{readingTime}</span>
+            {article.readingTime && <span>{article.readingTime}</span>}
             <time>
-              {new Date(frontmatter.publishedAt).toLocaleDateString("en-US", {
+              {new Date(article.publishedAt).toLocaleDateString("en-US", {
                 month: "long",
                 day: "numeric",
                 year: "numeric",
@@ -78,10 +80,10 @@ export default async function ArticlePage({
             </time>
           </div>
           <h1 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-            {frontmatter.title}
+            {article.title}
           </h1>
           <p className="mt-3 text-lg text-muted-foreground">
-            {frontmatter.description}
+            {article.description}
           </p>
         </header>
 

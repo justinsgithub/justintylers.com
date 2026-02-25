@@ -1,19 +1,20 @@
-import { getAllArticles } from "@/lib/mdx";
+import { fetchQuery } from "convex/nextjs";
+import { api } from "../../../convex/_generated/api";
 
 export async function GET() {
-  const articles = getAllArticles();
+  const articles = await fetchQuery(api.articles.list, {});
   const baseUrl = "https://justintylers.com";
 
   const items = articles
     .map(
       (article) => `
     <item>
-      <title><![CDATA[${article.frontmatter.title}]]></title>
+      <title><![CDATA[${article.title}]]></title>
       <link>${baseUrl}/articles/${article.slug}</link>
       <guid isPermaLink="true">${baseUrl}/articles/${article.slug}</guid>
-      <description><![CDATA[${article.frontmatter.description}]]></description>
-      <pubDate>${new Date(article.frontmatter.publishedAt).toUTCString()}</pubDate>
-      <category>${article.frontmatter.category}</category>
+      <description><![CDATA[${article.description}]]></description>
+      <pubDate>${new Date(article.publishedAt).toUTCString()}</pubDate>
+      <category>${article.category}</category>
     </item>`
     )
     .join("");

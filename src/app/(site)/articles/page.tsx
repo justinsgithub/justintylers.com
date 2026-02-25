@@ -1,5 +1,6 @@
 import { Metadata } from "next";
-import { getAllArticles } from "@/lib/mdx";
+import { fetchQuery } from "convex/nextjs";
+import { api } from "../../../../convex/_generated/api";
 import { ArticlesList } from "@/components/articles/articles-list";
 
 export const metadata: Metadata = {
@@ -8,8 +9,17 @@ export const metadata: Metadata = {
     "Exploring tech & AI, business, philosophy, and health & wellbeing.",
 };
 
-export default function ArticlesPage() {
-  const articles = getAllArticles();
+export default async function ArticlesPage() {
+  const articles = await fetchQuery(api.articles.list, {});
+
+  const mapped = articles.map((a) => ({
+    slug: a.slug,
+    title: a.title,
+    description: a.description,
+    category: a.category,
+    readingTime: a.readingTime || "",
+    publishedAt: a.publishedAt,
+  }));
 
   return (
     <div className="mx-auto max-w-5xl px-6 py-16">
@@ -21,7 +31,7 @@ export default function ArticlesPage() {
         wellbeing.
       </p>
       <div className="mt-10">
-        <ArticlesList articles={articles} />
+        <ArticlesList articles={mapped} />
       </div>
     </div>
   );

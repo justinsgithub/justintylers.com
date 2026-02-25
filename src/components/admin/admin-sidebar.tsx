@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
+  FileText,
   ListTodo,
   PenSquare,
   ArrowLeft,
@@ -14,7 +15,9 @@ import { useClerk } from "@clerk/nextjs";
 
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/social", label: "Queue", icon: ListTodo },
+  { href: "/admin/articles", label: "Articles", icon: FileText },
+  { href: "/admin/articles/new", label: "New Article", icon: PenSquare },
+  { href: "/admin/social", label: "Social Queue", icon: ListTodo },
   { href: "/admin/social/new", label: "New Post", icon: PenSquare },
 ];
 
@@ -35,7 +38,9 @@ export function AdminSidebar() {
           const isActive =
             item.href === "/admin"
               ? pathname === "/admin"
-              : pathname.startsWith(item.href);
+              : item.href.endsWith("/new")
+                ? pathname === item.href
+                : pathname.startsWith(item.href);
 
           return (
             <Link
