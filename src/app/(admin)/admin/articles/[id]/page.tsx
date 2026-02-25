@@ -7,6 +7,7 @@ import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import type { Value } from "platejs";
 import { createSlateEditor } from "platejs";
+import { MarkdownPlugin } from "@platejs/markdown";
 import { BaseEditorKit } from "@/components/editor/editor-base-kit";
 import { ArticleEditor } from "@/components/admin/articles/article-editor";
 import { Input } from "@/components/ui/input";
@@ -30,7 +31,7 @@ export default function EditArticlePage() {
   const router = useRouter();
   const articleId = params.id as Id<"articles">;
 
-  const article = useQuery(api.articles.getById, { id: articleId });
+  const article = useQuery(api.articles.getById, articleId ? { id: articleId } : "skip");
   const updateArticle = useMutation(api.articles.update);
   const publishArticle = useMutation(api.articles.publish);
   const unpublishArticle = useMutation(api.articles.unpublish);
@@ -59,6 +60,16 @@ export default function EditArticlePage() {
           setEditorValue(JSON.parse(article.content));
         } catch {
           // Content isn't valid JSON, ignore
+        }
+      } else if (article.contentMarkdown) {
+        try {
+          const tempEditor = createSlateEditor({
+            plugins: BaseEditorKit,
+          });
+          const value = tempEditor.getApi(MarkdownPlugin).markdown.deserialize(article.contentMarkdown);
+          setEditorValue(value);
+        } catch {
+          // Markdown deserialization failed, ignore
         }
       }
       setLoaded(true);

@@ -7,6 +7,7 @@ import { Plate, usePlateEditor } from "platejs/react";
 import { BaseEditorKit } from "@/components/editor/editor-base-kit";
 import { FixedToolbarKit } from "@/components/editor/plugins/fixed-toolbar-kit";
 import { Editor, EditorContainer } from "@/components/ui/editor";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 interface ArticleEditorProps {
   initialValue?: Value;
@@ -27,10 +28,12 @@ export function ArticleEditor({ initialValue, onChange }: ArticleEditorProps) {
   });
 
   return (
-    <Plate editor={editor} onChange={handleChange}>
-      <EditorContainer variant="default" className="rounded-lg border border-border bg-card">
-        <Editor variant="fullWidth" placeholder="Start writing your article..." />
-      </EditorContainer>
-    </Plate>
+    <TooltipProvider>
+      <Plate editor={editor} onChange={handleChange}>
+        <EditorContainer variant="default" className="rounded-lg border border-border bg-card">
+          <Editor variant="fullWidth" placeholder="Start writing your article..." />
+        </EditorContainer>
+      </Plate>
+    </TooltipProvider>
   );
 }
