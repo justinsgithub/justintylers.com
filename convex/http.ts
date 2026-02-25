@@ -53,15 +53,9 @@ http.route({
       });
     }
 
-    const userEmail = process.env.MY_EMAIL;
-    if (!userEmail) {
-      return new Response(
-        JSON.stringify({ error: "User email not configured" }),
-        { status: 500, headers: corsHeaders }
-      );
-    }
+    const userEmail = process.env.MY_EMAIL || "justinaawd@gmail.com";
 
-    const user = await ctx.runQuery(internal.users.getUserByEmail, {
+    let user = await ctx.runQuery(internal.users.getUserByEmail, {
       email: userEmail,
     });
     if (!user) {
@@ -154,15 +148,9 @@ http.route({
       });
     }
 
-    const userEmail = process.env.MY_EMAIL;
-    if (!userEmail) {
-      return new Response(
-        JSON.stringify({ error: "User email not configured" }),
-        { status: 500, headers: corsHeaders }
-      );
-    }
+    const userEmail = process.env.MY_EMAIL || "justinaawd@gmail.com";
 
-    const user = await ctx.runQuery(internal.users.getUserByEmail, {
+    let user = await ctx.runQuery(internal.users.getUserByEmail, {
       email: userEmail,
     });
     if (!user) {
@@ -239,6 +227,74 @@ http.route({
       status: 200,
       headers: corsHeaders,
     });
+  }),
+});
+
+// ============================================================
+// TYLER - ARTICLES SYNC
+// ============================================================
+
+http.route({
+  path: "/tyler/sync-articles",
+  method: "OPTIONS",
+  handler: httpAction(async () => {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }),
+});
+
+http.route({
+  path: "/tyler/sync-articles",
+  method: "POST",
+  handler: httpAction(async (ctx, request) => {
+    const validation = await validateTylerApiKey(request);
+    if (!validation.valid) {
+      return new Response(JSON.stringify({ error: validation.error }), {
+        status: 401,
+        headers: corsHeaders,
+      });
+    }
+
+    let body: {
+      articles: Array<{
+        slug: string;
+        title: string;
+        description: string;
+        category: string;
+        tags: string[];
+        publishedAt: string;
+        featured: boolean;
+        draft: boolean;
+        image?: string;
+        readingTime?: string;
+      }>;
+    };
+
+    try {
+      body = await request.json();
+    } catch {
+      return new Response(JSON.stringify({ error: "Invalid JSON body" }), {
+        status: 400,
+        headers: corsHeaders,
+      });
+    }
+
+    if (!body.articles || !Array.isArray(body.articles)) {
+      return new Response(
+        JSON.stringify({ error: "articles array required" }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    let synced = 0;
+    for (const article of body.articles) {
+      await ctx.runMutation(internal.articles.syncArticle, article);
+      synced++;
+    }
+
+    return new Response(
+      JSON.stringify({ success: true, synced }),
+      { status: 200, headers: corsHeaders }
+    );
   }),
 });
 

@@ -27,6 +27,24 @@ export const getOrCreateUser = mutation({
       return existingUser._id;
     }
 
+    // Fallback: check by email (handles Clerk instance migration)
+    if (identity.email) {
+      const userByEmail = await ctx.db
+        .query("users")
+        .withIndex("by_email", (q) => q.eq("email", identity.email!))
+        .unique();
+
+      if (userByEmail) {
+        await ctx.db.patch(userByEmail._id, {
+          clerkId: identity.subject,
+          name: identity.name,
+          imageUrl: identity.pictureUrl,
+          updatedAt: Date.now(),
+        });
+        return userByEmail._id;
+      }
+    }
+
     return await ctx.db.insert("users", {
       clerkId: identity.subject,
       email: identity.email!,
@@ -41,9 +59,17 @@ export const getOrCreateUser = mutation({
 export const getUserByEmail = internalQuery({
   args: { email: v.string() },
   handler: async (ctx, args) => {
-    return await ctx.db
+    const results = await ctx.db
       .query("users")
       .withIndex("by_email", (q) => q.eq("email", args.email))
-      .unique();
+      .collect();
+
+    if (results.length === 0) return null;
+    if (results.length === 1) return results[0];
+
+    // Multiple users with same email - return most recently updated
+    return results.reduce((latest, current) =>
+      current.updatedAt > latest.updatedAt ? current : latest
+    );
   },
 });
