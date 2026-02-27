@@ -75,6 +75,7 @@ export default async function ArticlePage({
             alt={article.title}
             width={1536}
             height={864}
+            quality={90}
             sizes="(max-width: 768px) 100vw, 768px"
             className="w-full object-cover"
             priority
