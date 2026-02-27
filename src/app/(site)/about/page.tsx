@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 export const metadata: Metadata = {
   title: "About",
   description:
-    "Justin Angeles: health and wellness, software development, and AI integration. From Alaska to building tools and figuring it out.",
+    "Justin Angeles: health and wellness, software development, and AI integration.",
 };
 
 export default function AboutPage() {
@@ -22,16 +22,12 @@ export default function AboutPage() {
           software development, and AI integration.
         </p>
 
-        <h2>The Short Version</h2>
+        <h2>Philosophy</h2>
+        <blockquote>
+          Learn, grow, create, build, teach, connect, live, love.
+        </blockquote>
         <p>
-          I grew up on the Kenai Peninsula in Alaska, worked multiple jobs
-          simultaneously for years, and taught myself to code. Now I build
-          software, integrate AI tools, and work in the wellness industry.
-        </p>
-
-        <h2>What I Believe</h2>
-        <p>
-          Life is growth. Everything that moves you forward, even if
+          Life is about serving God through growth and evolution. Everything that moves you forward, even if
           it&apos;s uncomfortable, is worth doing. Everything that keeps you
           stuck is worth questioning.
         </p>
@@ -39,8 +35,7 @@ export default function AboutPage() {
           I think AI is one of the most important tools we&apos;ve ever built.
           Not because it replaces people, but because it amplifies what
           people can do. A solo developer with the right AI tools can build
-          what used to take a team. That&apos;s not science fiction. That&apos;s
-          my Tuesday.
+          what used to take a team.
         </p>
 
         <h2>Tyler</h2>
@@ -63,7 +58,7 @@ export default function AboutPage() {
           </Link>
           .
         </p>
-
+{/*
         <h2>What I Build</h2>
         <p>
           I built a lead generation platform for contractor sales teams,
@@ -76,7 +71,6 @@ export default function AboutPage() {
           <strong>LifeDirector</strong>, a personal tracking system that acts
           as my mission control for goals, health, finances, and relationships.
         </p>
-
         <h2>Philosophy</h2>
         <blockquote>
           Learn, grow, create, build, teach, connect, live, love.
@@ -86,6 +80,7 @@ export default function AboutPage() {
           live. I believe in building things that matter, sharing what I
           learn, and helping people do more with less.
         </p>
+        */}
       </div>
 
       <div className="mt-12 flex gap-4">
