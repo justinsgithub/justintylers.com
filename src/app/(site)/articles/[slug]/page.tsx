@@ -11,6 +11,8 @@ import { mdxComponents } from "@/components/articles/mdx-components";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
+export const dynamic = "force-dynamic";
+
 const categoryLabels: Record<string, string> = {
   tech: "Tech & AI",
   business: "Business",
