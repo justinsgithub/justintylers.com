@@ -73,8 +73,9 @@ export default async function ArticlePage({
           <Image
             src={article.image}
             alt={article.title}
-            width={768}
-            height={432}
+            width={1536}
+            height={864}
+            sizes="(max-width: 768px) 100vw, 768px"
             className="w-full object-cover"
             priority
           />
