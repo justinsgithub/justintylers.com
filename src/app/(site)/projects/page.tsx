@@ -1,6 +1,6 @@
 import { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Database, Microscope, Bot } from "lucide-react";
+import { ArrowRight, ExternalLink, Database, Microscope, Bot } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 
 export const metadata: Metadata = {
@@ -12,9 +12,9 @@ export const metadata: Metadata = {
 const projects = [
   {
     slug: "contractors",
-    title: "Automated Lead Generation",
+    title: "Proprietary Lead Generation Platform",
     description:
-      "Built a lead generation platform for contractor tools sales team. Automated reasearch and scraping from various sources and databases on the web, phone number enrichment, quality filtering, and a client dashboard for data export and invoice creation.",
+      "Built a proprietary lead generation platform that has scraped and enriched over 1.5 million contractor leads. Automated research and scraping from various sources and databases on the web, phone number enrichment, quality filtering, and a client dashboard for data export and invoice creation.",
     icon: Database,
   },
   {
@@ -22,6 +22,8 @@ const projects = [
     title: "Spa Science Lab",
     description: "Educational platform teaching spa and wellness science through interactive articles, ingredient databases, glossary, and structured learning paths.",
     icon: Microscope,
+    href: "https://spasciencelab.com",
+    external: true,
   },
   {
     slug: "tyler",
@@ -29,6 +31,7 @@ const projects = [
     description:
       "A persistent AI assistant built on Claude Code with file-based memory, automatic context injection, Telegram interface, and integrations across finances, health, and productivity.",
     icon: Bot,
+    href: "/articles/meet-tyler",
   },
 ];
 
@@ -43,28 +46,50 @@ export default function ProjectsPage() {
       </p>
 
       <div className="mt-10 grid gap-6">
-        {projects.map((project) => (
-          <Card
-            key={project.slug}
-            className="border-border/50 bg-card/30 transition-all hover:border-primary/20 hover:bg-card/60"
-          >
-            <CardContent className="p-8">
-              <div className="flex items-start gap-4">
-                <div className="rounded-lg bg-primary/10 p-3">
-                  <project.icon className="h-6 w-6 text-primary" />
+        {projects.map((project) => {
+          const content = (
+            <Card
+              className={`border-border/50 bg-card/30 transition-all hover:border-primary/20 hover:bg-card/60 ${project.href ? "cursor-pointer" : ""}`}
+            >
+              <CardContent className="p-8">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-lg bg-primary/10 p-3">
+                    <project.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-xl font-bold tracking-tight">
+                      {project.title}
+                      {project.href && (
+                        <ExternalLink className="ml-2 inline h-4 w-4 text-muted-foreground" />
+                      )}
+                    </h2>
+                    <p className="mt-2 text-muted-foreground">
+                      {project.description}
+                    </p>
+                  </div>
                 </div>
-                <div className="flex-1">
-                  <h2 className="text-xl font-bold tracking-tight">
-                    {project.title}
-                  </h2>
-                  <p className="mt-2 text-muted-foreground">
-                    {project.description}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          );
+
+          if (project.href && project.external) {
+            return (
+              <a key={project.slug} href={project.href} target="_blank" rel="noopener noreferrer">
+                {content}
+              </a>
+            );
+          }
+
+          if (project.href) {
+            return (
+              <Link key={project.slug} href={project.href}>
+                {content}
+              </Link>
+            );
+          }
+
+          return <div key={project.slug}>{content}</div>;
+        })}
       </div>
 
       <div className="mt-12 text-center">
