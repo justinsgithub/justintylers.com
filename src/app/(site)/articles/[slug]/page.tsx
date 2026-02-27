@@ -6,6 +6,7 @@ import { MDXRemote } from "next-mdx-remote/rsc";
 import rehypeSlug from "rehype-slug";
 import { fetchQuery } from "convex/nextjs";
 import { api } from "../../../../../convex/_generated/api";
+import Image from "next/image";
 import { mdxComponents } from "@/components/articles/mdx-components";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,7 @@ export async function generateMetadata({
       type: "article",
       publishedTime: article.publishedAt,
       authors: ["Justin Angeles"],
+      ...(article.image ? { images: [{ url: article.image }] } : {}),
     },
   };
 }
@@ -64,7 +66,20 @@ export default async function ArticlePage({
         Back to articles
       </Link>
 
-      <article className="mt-8">
+      {article.image && (
+        <div className="mt-8 overflow-hidden rounded-xl">
+          <Image
+            src={article.image}
+            alt={article.title}
+            width={768}
+            height={432}
+            className="w-full object-cover"
+            priority
+          />
+        </div>
+      )}
+
+      <article className={article.image ? "mt-6" : "mt-8"}>
         <header>
           <div className="flex items-center gap-3 text-sm text-muted-foreground">
             <Badge variant="secondary">

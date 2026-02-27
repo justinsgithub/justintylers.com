@@ -13,7 +13,7 @@ export async function POST(request: Request) {
       subject: "You're on the list",
       html: `
         <p>Hey, thanks for subscribing.</p>
-        <p>I'll send you an email when I publish new articles or launch new projects. That's it. No spam.</p>
+        <p>I'll send you an email when I publish new articles or launch new projects.</p>
         <p>If you ever want to reach me directly, just reply to this email.</p>
         <p>– Justin</p>
       `,

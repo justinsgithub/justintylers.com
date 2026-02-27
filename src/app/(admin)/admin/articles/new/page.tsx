@@ -10,6 +10,7 @@ import { createSlateEditor } from "platejs";
 import { MarkdownPlugin } from "@platejs/markdown";
 import { BaseEditorKit } from "@/components/editor/editor-base-kit";
 import { ArticleEditor } from "@/components/admin/articles/article-editor";
+import { CoverImageUpload } from "@/components/admin/articles/cover-image-upload";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -43,6 +44,7 @@ export default function NewArticlePage() {
   const [category, setCategory] = useState("tech");
   const [tags, setTags] = useState("");
   const [featured, setFeatured] = useState(false);
+  const [image, setImage] = useState<string | undefined>();
   const [editorValue, setEditorValue] = useState<Value | undefined>();
   const [saving, setSaving] = useState(false);
 
@@ -107,6 +109,7 @@ export default function NewArticlePage() {
         publishedAt: new Date().toISOString().split("T")[0],
         featured,
         draft: asDraft,
+        image: image || undefined,
         content: contentJson,
         contentMarkdown,
       });
@@ -184,6 +187,8 @@ export default function NewArticlePage() {
               className="min-h-[80px]"
             />
           </div>
+
+          <CoverImageUpload image={image} onChange={setImage} />
 
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">

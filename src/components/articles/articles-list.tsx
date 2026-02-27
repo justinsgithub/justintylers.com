@@ -12,6 +12,7 @@ export interface ArticleListItem {
   category: string;
   readingTime: string;
   publishedAt: string;
+  image?: string;
 }
 
 const categories = [

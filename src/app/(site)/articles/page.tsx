@@ -19,6 +19,7 @@ export default async function ArticlesPage() {
     category: a.category,
     readingTime: a.readingTime || "",
     publishedAt: a.publishedAt,
+    image: a.image || undefined,
   }));
 
   return (

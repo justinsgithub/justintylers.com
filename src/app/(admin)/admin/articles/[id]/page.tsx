@@ -10,6 +10,7 @@ import { createSlateEditor } from "platejs";
 import { MarkdownPlugin } from "@platejs/markdown";
 import { BaseEditorKit } from "@/components/editor/editor-base-kit";
 import { ArticleEditor } from "@/components/admin/articles/article-editor";
+import { CoverImageUpload } from "@/components/admin/articles/cover-image-upload";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
@@ -80,6 +81,7 @@ export default function EditArticlePage() {
   const [category, setCategory] = useState("tech");
   const [tags, setTags] = useState("");
   const [featured, setFeatured] = useState(false);
+  const [image, setImage] = useState<string | undefined>();
   const [editorValue, setEditorValue] = useState<Value | undefined>();
   const [loaded, setLoaded] = useState(false);
   const [changeKey, setChangeKey] = useState(0);
@@ -92,6 +94,7 @@ export default function EditArticlePage() {
       setCategory(article.category);
       setTags(article.tags.join(", "));
       setFeatured(article.featured);
+      setImage(article.image || undefined);
       if (article.content) {
         try {
           setEditorValue(JSON.parse(article.content));
@@ -129,13 +132,14 @@ export default function EditArticlePage() {
   const handleCategoryChange = useCallback((v: string) => { setCategory(v); markDirty(); }, [markDirty]);
   const handleTagsChange = useCallback((v: string) => { setTags(v); markDirty(); }, [markDirty]);
   const handleFeaturedChange = useCallback((v: boolean) => { setFeatured(v); markDirty(); }, [markDirty]);
+  const handleImageChange = useCallback((v: string | undefined) => { setImage(v); markDirty(); }, [markDirty]);
 
   // Refs for auto-save to read latest values without re-creating the callback
-  const formRef = useRef({ title, slug, description, category, tags, featured, editorValue });
-  formRef.current = { title, slug, description, category, tags, featured, editorValue };
+  const formRef = useRef({ title, slug, description, category, tags, featured, image, editorValue });
+  formRef.current = { title, slug, description, category, tags, featured, image, editorValue };
 
   const doSave = useCallback(async () => {
-    const { title, slug, description, category, tags, featured, editorValue } = formRef.current;
+    const { title, slug, description, category, tags, featured, image, editorValue } = formRef.current;
     if (!title.trim()) return;
 
     const contentJson = editorValue ? JSON.stringify(editorValue) : undefined;
@@ -164,6 +168,7 @@ export default function EditArticlePage() {
         .map((t) => t.trim())
         .filter(Boolean),
       featured,
+      image: image || "",
       content: contentJson,
       contentMarkdown,
     });
@@ -323,6 +328,8 @@ export default function EditArticlePage() {
               className="min-h-[80px]"
             />
           </div>
+
+          <CoverImageUpload image={image} onChange={handleImageChange} />
 
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">
