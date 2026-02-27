@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "convex/react";
+import { useUnsavedChanges } from "@/lib/hooks/use-unsaved-changes";
 import { api } from "../../../../../../convex/_generated/api";
 import type { Value } from "platejs";
 import { createSlateEditor } from "platejs";
@@ -44,6 +45,12 @@ export default function NewArticlePage() {
   const [featured, setFeatured] = useState(false);
   const [editorValue, setEditorValue] = useState<Value | undefined>();
   const [saving, setSaving] = useState(false);
+
+  const isDirty = useMemo(
+    () => !!(title || description || editorValue),
+    [title, description, editorValue]
+  );
+  useUnsavedChanges(isDirty);
 
   const handleTitleChange = (value: string) => {
     setTitle(value);

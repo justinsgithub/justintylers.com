@@ -6,6 +6,17 @@ import { api } from "../../../../convex/_generated/api";
 import { StatusBadge } from "./status-badge";
 import { PlatformBadge } from "./platform-badge";
 import { type Platform, type Status } from "@/lib/social-constants";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Check, Archive, Trash2, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Doc } from "../../../../convex/_generated/dataModel";
@@ -40,8 +51,7 @@ export function DraftGroupCard({ group }: { group: GroupSummary }) {
     toast.success(`Archived all ${group.platforms.length} variants`);
   };
 
-  const handleDeleteGroup = async (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleDeleteGroup = async () => {
     await deleteGroup({ groupId: group.groupId });
     toast.success("Deleted group");
   };
@@ -96,13 +106,31 @@ export function DraftGroupCard({ group }: { group: GroupSummary }) {
         >
           <Archive className="h-4 w-4" />
         </button>
-        <button
-          onClick={handleDeleteGroup}
-          className="rounded-md p-1.5 text-muted-foreground hover:bg-red-900/30 hover:text-red-400"
-          title="Delete group"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              onClick={(e) => e.preventDefault()}
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-red-900/30 hover:text-red-400"
+              title="Delete group"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this group?</AlertDialogTitle>
+              <AlertDialogDescription>
+                All {group.platforms.length} variants will be deleted. This can&apos;t be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction variant="destructive" onClick={handleDeleteGroup}>
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Link>
   );

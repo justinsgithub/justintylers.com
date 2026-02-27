@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
@@ -21,6 +21,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
   PLATFORM_MAP,
   STATUSES,
   STATUS_STYLES,
@@ -28,8 +39,34 @@ import {
   type Status,
 } from "@/lib/social-constants";
 import { toast } from "sonner";
-import { ArrowLeft, Trash2 } from "lucide-react";
+import { ArrowLeft, Trash2, Loader2, Check } from "lucide-react";
 import Link from "next/link";
+import { useAutoSave, type SaveStatus } from "@/lib/hooks/use-auto-save";
+import { useUnsavedChanges } from "@/lib/hooks/use-unsaved-changes";
+
+function SaveIndicator({ status }: { status: SaveStatus }) {
+  if (status === "idle") return null;
+  if (status === "saving")
+    return (
+      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        Saving...
+      </span>
+    );
+  if (status === "saved")
+    return (
+      <span className="flex items-center gap-1.5 text-xs text-green-400">
+        <Check className="h-3 w-3" />
+        Saved
+      </span>
+    );
+  return (
+    <span className="flex items-center gap-1.5 text-xs text-yellow-400">
+      <span className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
+      Unsaved
+    </span>
+  );
+}
 
 export default function EditDraftPage() {
   const params = useParams();
@@ -52,7 +89,8 @@ export default function EditDraftPage() {
   const [articleTitle, setArticleTitle] = useState<string | undefined>();
   const [photoNeeded, setPhotoNeeded] = useState("");
   const [notes, setNotes] = useState("");
-  const [saving, setSaving] = useState(false);
+  const [changeKey, setChangeKey] = useState(0);
+  const [loaded, setLoaded] = useState(false);
 
   const articlesData = useQuery(api.articles.list, { includeDrafts: true });
   const articles = useMemo(
@@ -61,15 +99,44 @@ export default function EditDraftPage() {
   );
 
   useEffect(() => {
-    if (draft) {
+    if (draft && !loaded) {
       setTitle(draft.title);
       setContent(draft.content);
       setArticleSlug(draft.articleSlug);
       setArticleTitle(draft.articleTitle);
       setPhotoNeeded(draft.photoNeeded ?? "");
       setNotes(draft.notes ?? "");
+      setLoaded(true);
     }
-  }, [draft]);
+  }, [draft, loaded]);
+
+  const markDirty = useCallback(() => {
+    setChangeKey((k) => k + 1);
+  }, []);
+
+  const formRef = useRef({ title, content, articleSlug, articleTitle, photoNeeded, notes });
+  formRef.current = { title, content, articleSlug, articleTitle, photoNeeded, notes };
+
+  const doSave = useCallback(async () => {
+    const { title, content, articleSlug, articleTitle, photoNeeded, notes } = formRef.current;
+    const articleUrl = articleSlug
+      ? `https://justintylers.com/articles/${articleSlug}`
+      : undefined;
+
+    await updateDraft({
+      id: draftId,
+      title,
+      content,
+      articleSlug,
+      articleUrl,
+      articleTitle,
+      photoNeeded: photoNeeded || undefined,
+      notes: notes || undefined,
+    });
+  }, [draftId, updateDraft]);
+
+  const { status, saveNow } = useAutoSave(changeKey, doSave);
+  useUnsavedChanges(status === "unsaved" || status === "saving");
 
   if (draft === undefined) {
     return (
@@ -85,28 +152,8 @@ export default function EditDraftPage() {
   const siblings = group?.filter((d) => d._id !== draftId) ?? [];
 
   const handleSave = async () => {
-    setSaving(true);
-    try {
-      const articleUrl = articleSlug
-        ? `https://justintylers.com/articles/${articleSlug}`
-        : undefined;
-
-      await updateDraft({
-        id: draftId,
-        title,
-        content,
-        articleSlug,
-        articleUrl,
-        articleTitle,
-        photoNeeded: photoNeeded || undefined,
-        notes: notes || undefined,
-      });
-      toast.success("Saved");
-    } catch {
-      toast.error("Failed to save");
-    } finally {
-      setSaving(false);
-    }
+    await saveNow();
+    toast.success("Saved");
   };
 
   const handleStatusChange = async (newStatus: Status) => {
@@ -136,18 +183,36 @@ export default function EditDraftPage() {
         />
         <StatusBadge status={draft.status as Status} />
         <div className="ml-auto flex items-center gap-2">
-          <Button onClick={handleSave} disabled={saving} size="sm">
-            {saving ? "Saving..." : "Save"}
+          <SaveIndicator status={status} />
+          <Button onClick={handleSave} disabled={status === "saving"} size="sm">
+            {status === "saving" ? "Saving..." : "Save"}
           </Button>
-          <Button
-            onClick={handleDelete}
-            variant="outline"
-            size="sm"
-            className="text-red-400 hover:bg-red-900/20 hover:text-red-300"
-          >
-            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-            Delete
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-red-400 hover:bg-red-900/20 hover:text-red-300"
+              >
+                <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this draft?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This can&apos;t be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction variant="destructive" onClick={handleDelete}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
@@ -174,7 +239,7 @@ export default function EditDraftPage() {
             </label>
             <Input
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => { setTitle(e.target.value); markDirty(); }}
             />
           </div>
 
@@ -209,6 +274,7 @@ export default function EditDraftPage() {
               onChange={(slug, title) => {
                 setArticleSlug(slug);
                 setArticleTitle(title);
+                markDirty();
               }}
             />
           </div>
@@ -219,7 +285,7 @@ export default function EditDraftPage() {
             </label>
             <Input
               value={photoNeeded}
-              onChange={(e) => setPhotoNeeded(e.target.value)}
+              onChange={(e) => { setPhotoNeeded(e.target.value); markDirty(); }}
             />
           </div>
 
@@ -239,7 +305,7 @@ export default function EditDraftPage() {
             </label>
             <Textarea
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e) => { setNotes(e.target.value); markDirty(); }}
               className="min-h-[80px]"
             />
           </div>
@@ -257,7 +323,7 @@ export default function EditDraftPage() {
           </div>
           <Textarea
             value={content}
-            onChange={(e) => setContent(e.target.value)}
+            onChange={(e) => { setContent(e.target.value); markDirty(); }}
             className="min-h-[300px] resize-y text-sm"
           />
         </div>

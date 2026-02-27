@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { useMutation, useQuery } from "convex/react";
+import { useUnsavedChanges } from "@/lib/hooks/use-unsaved-changes";
 import { api } from "../../../../../../convex/_generated/api";
 import { SideBySideEditor } from "@/components/admin/social/side-by-side-editor";
 import { ArticleSlugPicker } from "@/components/admin/social/article-slug-picker";
@@ -43,6 +44,12 @@ export default function NewPostPage() {
     instagram: "",
     facebook: "",
   });
+
+  const isDirty = useMemo(
+    () => !!(title || Object.values(content).some((v) => v)),
+    [title, content]
+  );
+  useUnsavedChanges(isDirty);
 
   const handleContentChange = (platform: Platform, value: string) => {
     setContent((prev) => ({ ...prev, [platform]: value }));

@@ -8,6 +8,17 @@ import { StatusBadge } from "./status-badge";
 import { PlatformBadge } from "./platform-badge";
 import { CharCounter } from "./char-counter";
 import { PLATFORM_MAP, type Platform, type Status } from "@/lib/social-constants";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Check, Archive, Trash2, FileText } from "lucide-react";
 import { toast } from "sonner";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -54,8 +65,7 @@ export function DraftCard({
     toast.success("Draft archived");
   };
 
-  const handleDelete = async (e: React.MouseEvent) => {
-    e.preventDefault();
+  const handleDelete = async () => {
     await deleteDraft({ id });
     toast.success("Draft deleted");
   };
@@ -119,13 +129,30 @@ export function DraftCard({
         >
           <Archive className="h-4 w-4" />
         </button>
-        <button
-          onClick={handleDelete}
-          className="rounded-md p-1.5 text-muted-foreground hover:bg-red-900/30 hover:text-red-400"
-          title="Delete"
-        >
-          <Trash2 className="h-4 w-4" />
-        </button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <button
+              className="rounded-md p-1.5 text-muted-foreground hover:bg-red-900/30 hover:text-red-400"
+              title="Delete"
+            >
+              <Trash2 className="h-4 w-4" />
+            </button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete this draft?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This can&apos;t be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction variant="destructive" onClick={handleDelete}>
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
     </Link>
   );

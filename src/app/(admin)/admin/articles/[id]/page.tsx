@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation } from "convex/react";
 import { api } from "../../../../../../convex/_generated/api";
@@ -22,9 +22,46 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { ArrowLeft, Trash2, ExternalLink } from "lucide-react";
+import { ArrowLeft, Trash2, ExternalLink, Loader2, Check } from "lucide-react";
 import Link from "next/link";
+import { useAutoSave, type SaveStatus } from "@/lib/hooks/use-auto-save";
+import { useUnsavedChanges } from "@/lib/hooks/use-unsaved-changes";
+
+function SaveIndicator({ status }: { status: SaveStatus }) {
+  if (status === "idle") return null;
+  if (status === "saving")
+    return (
+      <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+        <Loader2 className="h-3 w-3 animate-spin" />
+        Saving...
+      </span>
+    );
+  if (status === "saved")
+    return (
+      <span className="flex items-center gap-1.5 text-xs text-green-400">
+        <Check className="h-3 w-3" />
+        Saved
+      </span>
+    );
+  return (
+    <span className="flex items-center gap-1.5 text-xs text-yellow-400">
+      <span className="h-1.5 w-1.5 rounded-full bg-yellow-400" />
+      Unsaved
+    </span>
+  );
+}
 
 export default function EditArticlePage() {
   const params = useParams();
@@ -44,8 +81,8 @@ export default function EditArticlePage() {
   const [tags, setTags] = useState("");
   const [featured, setFeatured] = useState(false);
   const [editorValue, setEditorValue] = useState<Value | undefined>();
-  const [saving, setSaving] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [changeKey, setChangeKey] = useState(0);
 
   useEffect(() => {
     if (article && !loaded) {
@@ -76,9 +113,64 @@ export default function EditArticlePage() {
     }
   }, [article, loaded]);
 
+  const markDirty = useCallback(() => {
+    setChangeKey((k) => k + 1);
+  }, []);
+
   const handleEditorChange = useCallback((value: Value) => {
     setEditorValue(value);
+    setChangeKey((k) => k + 1);
   }, []);
+
+  // Wrap field setters to track changes
+  const handleTitleChange = useCallback((v: string) => { setTitle(v); markDirty(); }, [markDirty]);
+  const handleSlugChange = useCallback((v: string) => { setSlug(v); markDirty(); }, [markDirty]);
+  const handleDescriptionChange = useCallback((v: string) => { setDescription(v); markDirty(); }, [markDirty]);
+  const handleCategoryChange = useCallback((v: string) => { setCategory(v); markDirty(); }, [markDirty]);
+  const handleTagsChange = useCallback((v: string) => { setTags(v); markDirty(); }, [markDirty]);
+  const handleFeaturedChange = useCallback((v: boolean) => { setFeatured(v); markDirty(); }, [markDirty]);
+
+  // Refs for auto-save to read latest values without re-creating the callback
+  const formRef = useRef({ title, slug, description, category, tags, featured, editorValue });
+  formRef.current = { title, slug, description, category, tags, featured, editorValue };
+
+  const doSave = useCallback(async () => {
+    const { title, slug, description, category, tags, featured, editorValue } = formRef.current;
+    if (!title.trim()) return;
+
+    const contentJson = editorValue ? JSON.stringify(editorValue) : undefined;
+    let contentMarkdown: string | undefined;
+
+    if (editorValue) {
+      try {
+        const tempEditor = createSlateEditor({
+          plugins: BaseEditorKit,
+          value: editorValue,
+        });
+        contentMarkdown = tempEditor.api.markdown.serialize();
+      } catch {
+        contentMarkdown = undefined;
+      }
+    }
+
+    await updateArticle({
+      id: articleId,
+      title: title.trim(),
+      slug: slug.trim(),
+      description: description.trim(),
+      category,
+      tags: tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean),
+      featured,
+      content: contentJson,
+      contentMarkdown,
+    });
+  }, [articleId, updateArticle]);
+
+  const { status, saveNow } = useAutoSave(changeKey, doSave);
+  useUnsavedChanges(status === "unsaved" || status === "saving");
 
   if (article === undefined) {
     return <div className="text-sm text-muted-foreground">Loading...</div>;
@@ -93,46 +185,8 @@ export default function EditArticlePage() {
       toast.error("Title is required");
       return;
     }
-
-    setSaving(true);
-    try {
-      const contentJson = editorValue ? JSON.stringify(editorValue) : undefined;
-      let contentMarkdown: string | undefined;
-
-      if (editorValue) {
-        try {
-          const tempEditor = createSlateEditor({
-            plugins: BaseEditorKit,
-            value: editorValue,
-          });
-          contentMarkdown = tempEditor.api.markdown.serialize();
-        } catch {
-          contentMarkdown = undefined;
-        }
-      }
-
-      await updateArticle({
-        id: articleId,
-        title: title.trim(),
-        slug: slug.trim(),
-        description: description.trim(),
-        category,
-        tags: tags
-          .split(",")
-          .map((t) => t.trim())
-          .filter(Boolean),
-        featured,
-        content: contentJson,
-        contentMarkdown,
-      });
-      toast.success("Saved");
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Failed to save"
-      );
-    } finally {
-      setSaving(false);
-    }
+    await saveNow();
+    toast.success("Saved");
   };
 
   const handlePublish = async () => {
@@ -140,7 +194,7 @@ export default function EditArticlePage() {
     try {
       await publishArticle({ id: articleId });
       toast.success("Published");
-    } catch (err) {
+    } catch {
       toast.error("Failed to publish");
     }
   };
@@ -149,7 +203,7 @@ export default function EditArticlePage() {
     try {
       await unpublishArticle({ id: articleId });
       toast.success("Unpublished");
-    } catch (err) {
+    } catch {
       toast.error("Failed to unpublish");
     }
   };
@@ -159,7 +213,7 @@ export default function EditArticlePage() {
       await removeArticle({ id: articleId });
       toast.success("Deleted");
       router.push("/admin/articles");
-    } catch (err) {
+    } catch {
       toast.error("Failed to delete");
     }
   };
@@ -182,6 +236,7 @@ export default function EditArticlePage() {
           <Badge className="bg-green-600/20 text-green-400">Published</Badge>
         )}
         <div className="ml-auto flex items-center gap-2">
+          <SaveIndicator status={status} />
           {!article.draft && (
             <Link
               href={`/articles/${article.slug}`}
@@ -191,11 +246,11 @@ export default function EditArticlePage() {
               <ExternalLink className="h-4 w-4" />
             </Link>
           )}
-          <Button onClick={handleSave} disabled={saving} size="sm">
-            {saving ? "Saving..." : "Save"}
+          <Button onClick={handleSave} disabled={status === "saving"} size="sm">
+            {status === "saving" ? "Saving..." : "Save"}
           </Button>
           {article.draft ? (
-            <Button onClick={handlePublish} size="sm" disabled={saving}>
+            <Button onClick={handlePublish} size="sm" disabled={status === "saving"}>
               Publish
             </Button>
           ) : (
@@ -207,15 +262,32 @@ export default function EditArticlePage() {
               Unpublish
             </Button>
           )}
-          <Button
-            onClick={handleDelete}
-            variant="outline"
-            size="sm"
-            className="text-red-400 hover:bg-red-900/20 hover:text-red-300"
-          >
-            <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-            Delete
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button
+                variant="outline"
+                size="sm"
+                className="text-red-400 hover:bg-red-900/20 hover:text-red-300"
+              >
+                <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                Delete
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this article?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This can&apos;t be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction variant="destructive" onClick={handleDelete}>
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
@@ -227,7 +299,7 @@ export default function EditArticlePage() {
             </label>
             <Input
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
+              onChange={(e) => handleTitleChange(e.target.value)}
             />
           </div>
 
@@ -237,7 +309,7 @@ export default function EditArticlePage() {
             </label>
             <Input
               value={slug}
-              onChange={(e) => setSlug(e.target.value)}
+              onChange={(e) => handleSlugChange(e.target.value)}
             />
           </div>
 
@@ -247,7 +319,7 @@ export default function EditArticlePage() {
             </label>
             <Textarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={(e) => handleDescriptionChange(e.target.value)}
               className="min-h-[80px]"
             />
           </div>
@@ -256,7 +328,7 @@ export default function EditArticlePage() {
             <label className="mb-1.5 block text-sm font-medium text-foreground">
               Category
             </label>
-            <Select value={category} onValueChange={setCategory}>
+            <Select value={category} onValueChange={handleCategoryChange}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -275,7 +347,7 @@ export default function EditArticlePage() {
             </label>
             <Input
               value={tags}
-              onChange={(e) => setTags(e.target.value)}
+              onChange={(e) => handleTagsChange(e.target.value)}
               placeholder="ai, automation, tools"
             />
             <p className="mt-1 text-xs text-muted-foreground">
@@ -287,7 +359,7 @@ export default function EditArticlePage() {
             <Checkbox
               id="featured"
               checked={featured}
-              onCheckedChange={(checked) => setFeatured(checked === true)}
+              onCheckedChange={(checked) => handleFeaturedChange(checked === true)}
             />
             <label
               htmlFor="featured"
