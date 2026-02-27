@@ -108,6 +108,7 @@ export function CoverImageUpload({ image, onChange }: CoverImageUploadProps) {
           <ImagePlus className="h-6 w-6" />
         )}
         <span>{uploading ? "Uploading..." : "Upload cover image"}</span>
+        <span className="text-xs text-muted-foreground/60">Recommended: 1200 x 630px</span>
       </button>
       <input
         ref={inputRef}
