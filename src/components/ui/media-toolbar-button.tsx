@@ -36,6 +36,8 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Input } from '@/components/ui/input';
 
+import { useEditorUpload } from '@/components/editor/editor-upload-context';
+
 import {
   ToolbarSplitButton,
   ToolbarSplitButtonPrimary,
@@ -84,14 +86,32 @@ export function MediaToolbarButton({
   const currentConfig = MEDIA_CONFIG[nodeType];
 
   const editor = useEditorRef();
+  const onUpload = useEditorUpload();
   const [open, setOpen] = React.useState(false);
   const [dialogOpen, setDialogOpen] = React.useState(false);
 
   const { openFilePicker } = useFilePicker({
     accept: currentConfig.accept,
     multiple: true,
-    onFilesSelected: ({ plainFiles: updatedFiles }) => {
-      editor.getTransforms(PlaceholderPlugin).insert.media(updatedFiles);
+    onFilesSelected: async ({ plainFiles: updatedFiles }) => {
+      if (onUpload && nodeType === 'img') {
+        for (const file of updatedFiles) {
+          try {
+            toast.loading('Uploading image...', { id: 'img-upload' });
+            const url = await onUpload(file);
+            editor.tf.insertNodes({
+              type: nodeType,
+              url,
+              children: [{ text: '' }],
+            });
+            toast.success('Image uploaded', { id: 'img-upload' });
+          } catch {
+            toast.error('Upload failed', { id: 'img-upload' });
+          }
+        }
+      } else {
+        editor.getTransforms(PlaceholderPlugin).insert.media(updatedFiles);
+      }
     },
   });
 

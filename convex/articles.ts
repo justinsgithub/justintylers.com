@@ -152,6 +152,20 @@ export const unpublish = mutation({
   },
 });
 
+export const generateUploadUrl = mutation({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.storage.generateUploadUrl();
+  },
+});
+
+export const getFileUrl = mutation({
+  args: { storageId: v.id("_storage") },
+  handler: async (ctx, args) => {
+    return await ctx.storage.getUrl(args.storageId);
+  },
+});
+
 // Internal query for Tyler HTTP API
 export const listInternal = internalQuery({
   args: { includeDrafts: v.optional(v.boolean()) },
