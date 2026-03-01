@@ -1,18 +1,40 @@
 "use client";
 
-import { SignedIn, SignedOut, RedirectToSignIn, useUser } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { AdminSidebar } from "@/components/admin/admin-sidebar";
 import { Toaster } from "sonner";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 const ADMIN_EMAIL = "justin@justintylers.com";
 
-function AdminGate({ children }: { children: React.ReactNode }) {
-  const { user, isLoaded } = useUser();
+export default function AdminLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const { isLoaded, isSignedIn } = useAuth();
+  const { user } = useUser();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      router.replace("/sign-in?redirect_url=" + encodeURIComponent(window.location.pathname));
+    }
+  }, [isLoaded, isSignedIn, router]);
 
   if (!isLoaded) {
     return (
       <div className="flex h-screen items-center justify-center">
         <div className="text-muted-foreground text-sm">Loading...</div>
+      </div>
+    );
+  }
+
+  if (!isSignedIn) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="text-muted-foreground text-sm">Redirecting...</div>
       </div>
     );
   }
@@ -31,27 +53,12 @@ function AdminGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  return <>{children}</>;
-}
-
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
   return (
     <>
-      <SignedOut>
-        <RedirectToSignIn />
-      </SignedOut>
-      <SignedIn>
-        <AdminGate>
-          <div className="flex min-h-screen">
-            <AdminSidebar />
-            <main className="ml-56 flex-1 p-6">{children}</main>
-          </div>
-        </AdminGate>
-      </SignedIn>
+      <div className="flex min-h-screen">
+        <AdminSidebar />
+        <main className="ml-56 flex-1 p-6">{children}</main>
+      </div>
       <Toaster theme="dark" position="bottom-right" />
     </>
   );
