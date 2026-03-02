@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useQuery } from "convex/react";
 import { api } from "../../../../../convex/_generated/api";
 import { Id } from "../../../../../convex/_generated/dataModel";
@@ -13,7 +13,7 @@ import { Layers, List, PenSquare } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
-export default function SocialQueuePage() {
+function SocialQueueContent() {
   const searchParams = useSearchParams();
   const initialStatus = searchParams.get("status") as Status | null;
   const [activeTab, setActiveTab] = useState<string>(initialStatus ?? "all");
@@ -141,5 +141,13 @@ export default function SocialQueuePage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function SocialQueuePage() {
+  return (
+    <Suspense fallback={<div className="text-sm text-muted-foreground">Loading...</div>}>
+      <SocialQueueContent />
+    </Suspense>
   );
 }
