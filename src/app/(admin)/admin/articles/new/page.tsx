@@ -127,23 +127,30 @@ export default function NewArticlePage() {
 
   return (
     <div className="max-w-6xl space-y-6">
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3">
         <Link
           href="/admin/articles"
-          className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+          className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
         >
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-2xl font-bold text-foreground">New Article</h1>
+        <h1 className="text-lg font-bold text-foreground sm:text-2xl">New Article</h1>
         <div className="ml-auto flex items-center gap-2">
           <Button
             variant="outline"
+            size="sm"
+            className="md:h-9 md:px-4"
             onClick={() => handleSave(true)}
             disabled={saving}
           >
-            {saving ? "Saving..." : "Save Draft"}
+            {saving ? "Saving..." : "Draft"}
           </Button>
-          <Button onClick={() => handleSave(false)} disabled={saving}>
+          <Button
+            size="sm"
+            className="md:h-9 md:px-4"
+            onClick={() => handleSave(false)}
+            disabled={saving}
+          >
             {saving ? "Publishing..." : "Publish"}
           </Button>
         </div>

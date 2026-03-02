@@ -169,20 +169,22 @@ export default function EditDraftPage() {
 
   return (
     <div className="max-w-4xl space-y-6">
-      <div className="flex items-center gap-3">
-        <Link
-          href="/admin/social"
-          className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <PlatformBadge
-          platform={draft.platform as Platform}
-          showLabel
-          size="md"
-        />
-        <StatusBadge status={draft.status as Status} />
-        <div className="ml-auto flex items-center gap-2">
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/admin/social"
+            className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <PlatformBadge
+            platform={draft.platform as Platform}
+            showLabel
+            size="md"
+          />
+          <StatusBadge status={draft.status as Status} />
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
           <SaveIndicator status={status} />
           <Button onClick={handleSave} disabled={status === "saving"} size="sm">
             {status === "saving" ? "Saving..." : "Save"}
@@ -195,7 +197,7 @@ export default function EditDraftPage() {
                 className="text-red-400 hover:bg-red-900/20 hover:text-red-300"
               >
                 <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                Delete
+                <span className="hidden sm:inline">Delete</span>
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>

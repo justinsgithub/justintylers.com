@@ -87,13 +87,13 @@ export function DraftGroupCard({ group }: { group: GroupSummary }) {
       </div>
 
       <div
-        className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
+        className="flex items-center gap-1 md:opacity-0 md:transition-opacity md:group-hover:opacity-100"
         onClick={(e) => e.preventDefault()}
       >
         {group.status !== "approved" && group.status !== "published" && (
           <button
             onClick={handleApproveGroup}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-green-900/30 hover:text-green-400"
+            className="rounded-md p-2 text-muted-foreground hover:bg-green-900/30 hover:text-green-400"
             title="Approve group"
           >
             <Check className="h-4 w-4" />
@@ -101,7 +101,7 @@ export function DraftGroupCard({ group }: { group: GroupSummary }) {
         )}
         <button
           onClick={handleArchiveGroup}
-          className="rounded-md p-1.5 text-muted-foreground hover:bg-yellow-900/30 hover:text-yellow-400"
+          className="rounded-md p-2 text-muted-foreground hover:bg-yellow-900/30 hover:text-yellow-400"
           title="Archive group"
         >
           <Archive className="h-4 w-4" />
@@ -110,7 +110,7 @@ export function DraftGroupCard({ group }: { group: GroupSummary }) {
           <AlertDialogTrigger asChild>
             <button
               onClick={(e) => e.preventDefault()}
-              className="rounded-md p-1.5 text-muted-foreground hover:bg-red-900/30 hover:text-red-400"
+              className="rounded-md p-2 text-muted-foreground hover:bg-red-900/30 hover:text-red-400"
               title="Delete group"
             >
               <Trash2 className="h-4 w-4" />

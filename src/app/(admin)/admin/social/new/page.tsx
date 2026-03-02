@@ -110,9 +110,9 @@ export default function NewPostPage() {
 
   return (
     <div className="max-w-5xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">New Post</h1>
-        <Button onClick={handleSave} disabled={saving}>
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-xl font-bold text-foreground md:text-2xl">New Post</h1>
+        <Button onClick={handleSave} disabled={saving} size="sm" className="md:h-9 md:px-4">
           {saving ? "Saving..." : "Create Post"}
         </Button>
       </div>

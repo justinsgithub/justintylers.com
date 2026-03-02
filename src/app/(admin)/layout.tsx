@@ -1,7 +1,7 @@
 "use client";
 
 import { useAuth, useUser } from "@clerk/nextjs";
-import { AdminSidebar } from "@/components/admin/admin-sidebar";
+import { AdminSidebar, MobileAdminHeader } from "@/components/admin/admin-sidebar";
 import { Toaster } from "sonner";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
@@ -46,9 +46,10 @@ export default function AdminLayout({
           </div>
         </div>
       )}
-      <div className="flex min-h-screen">
+      <div className="flex min-h-screen flex-col md:flex-row">
         <AdminSidebar />
-        <main className="ml-56 flex-1 p-6">{children}</main>
+        <MobileAdminHeader />
+        <main className="flex-1 p-4 md:ml-56 md:p-6">{children}</main>
       </div>
       <Toaster theme="dark" position="bottom-right" />
     </>

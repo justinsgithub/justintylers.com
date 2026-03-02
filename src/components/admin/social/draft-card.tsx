@@ -110,13 +110,13 @@ export function DraftCard({
       </div>
 
       <div
-        className="flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100"
+        className="flex items-center gap-1 md:opacity-0 md:transition-opacity md:group-hover:opacity-100"
         onClick={(e) => e.preventDefault()}
       >
         {status !== "approved" && status !== "published" && (
           <button
             onClick={handleApprove}
-            className="rounded-md p-1.5 text-muted-foreground hover:bg-green-900/30 hover:text-green-400"
+            className="rounded-md p-2 text-muted-foreground hover:bg-green-900/30 hover:text-green-400"
             title="Approve"
           >
             <Check className="h-4 w-4" />
@@ -124,7 +124,7 @@ export function DraftCard({
         )}
         <button
           onClick={handleArchive}
-          className="rounded-md p-1.5 text-muted-foreground hover:bg-yellow-900/30 hover:text-yellow-400"
+          className="rounded-md p-2 text-muted-foreground hover:bg-yellow-900/30 hover:text-yellow-400"
           title="Archive"
         >
           <Archive className="h-4 w-4" />
@@ -132,7 +132,7 @@ export function DraftCard({
         <AlertDialog>
           <AlertDialogTrigger asChild>
             <button
-              className="rounded-md p-1.5 text-muted-foreground hover:bg-red-900/30 hover:text-red-400"
+              className="rounded-md p-2 text-muted-foreground hover:bg-red-900/30 hover:text-red-400"
               title="Delete"
             >
               <Trash2 className="h-4 w-4" />

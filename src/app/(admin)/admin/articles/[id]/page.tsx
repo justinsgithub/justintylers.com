@@ -275,35 +275,37 @@ export default function EditArticlePage() {
 
   return (
     <div className="max-w-6xl space-y-6">
-      <div className="flex items-center gap-3">
-        <Link
-          href="/admin/articles"
-          className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Link>
-        <h1 className="text-lg font-bold text-foreground truncate">
-          {article.title}
-        </h1>
-        {article.draft ? (
-          <Badge variant="secondary">Draft</Badge>
-        ) : (
-          <Badge className="bg-green-600/20 text-green-400">Published</Badge>
-        )}
-        <div className="ml-auto flex items-center gap-2">
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Link
+            href="/admin/articles"
+            className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Link>
+          <h1 className="min-w-0 truncate text-lg font-bold text-foreground">
+            {article.title}
+          </h1>
+          {article.draft ? (
+            <Badge variant="secondary">Draft</Badge>
+          ) : (
+            <Badge className="bg-green-600/20 text-green-400">Published</Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
           <SaveIndicator status={status} />
           {!article.draft && (
             <Link
               href={`/articles/${article.slug}`}
               target="_blank"
-              className="rounded-md p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
+              className="rounded-md p-2 text-muted-foreground hover:bg-muted hover:text-foreground"
             >
               <ExternalLink className="h-4 w-4" />
             </Link>
           )}
           <Button onClick={handleCopyForLinkedIn} variant="outline" size="sm">
             <Copy className="mr-1.5 h-3.5 w-3.5" />
-            Copy
+            <span className="hidden sm:inline">Copy</span>
           </Button>
           <Button onClick={handleSave} disabled={status === "saving"} size="sm">
             {status === "saving" ? "Saving..." : "Save"}
@@ -329,7 +331,7 @@ export default function EditArticlePage() {
                 className="text-red-400 hover:bg-red-900/20 hover:text-red-300"
               >
                 <Trash2 className="mr-1.5 h-3.5 w-3.5" />
-                Delete
+                <span className="hidden sm:inline">Delete</span>
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>

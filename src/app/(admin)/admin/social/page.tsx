@@ -45,13 +45,13 @@ function SocialQueueContent() {
 
   return (
     <div className="max-w-5xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Social Queue</h1>
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-xl font-bold text-foreground md:text-2xl">Social Queue</h1>
         <div className="flex items-center gap-2">
           <button
             onClick={() => setGroupView(!groupView)}
             className={cn(
-              "inline-flex items-center gap-1.5 rounded-md border border-border px-3 py-2 text-sm transition-colors",
+              "inline-flex items-center gap-1.5 rounded-md border border-border px-2.5 py-2 text-sm transition-colors",
               groupView
                 ? "bg-primary/10 text-primary border-primary/30"
                 : "text-muted-foreground hover:bg-muted"
@@ -62,36 +62,38 @@ function SocialQueueContent() {
             ) : (
               <List className="h-4 w-4" />
             )}
-            {groupView ? "Groups" : "Individual"}
+            <span className="hidden sm:inline">{groupView ? "Groups" : "Individual"}</span>
           </button>
           <Link
             href="/admin/social/new"
-            className="inline-flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            className="inline-flex items-center gap-2 rounded-md bg-primary px-2.5 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90 sm:px-3"
           >
             <PenSquare className="h-4 w-4" />
-            New Post
+            <span className="hidden sm:inline">New Post</span>
           </Link>
         </div>
       </div>
 
-      <div className="flex items-center gap-1 border-b border-border">
-        {FILTER_TABS.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => {
-              setActiveTab(tab.key);
-              setSelectedIds([]);
-            }}
-            className={cn(
-              "border-b-2 px-4 py-2.5 text-sm font-medium transition-colors",
-              activeTab === tab.key
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
+      <div className="-mx-4 overflow-x-auto px-4 md:mx-0 md:px-0">
+        <div className="flex items-center gap-1 border-b border-border">
+          {FILTER_TABS.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => {
+                setActiveTab(tab.key);
+                setSelectedIds([]);
+              }}
+              className={cn(
+                "shrink-0 border-b-2 px-3 py-2.5 text-sm font-medium transition-colors",
+                activeTab === tab.key
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
       </div>
 
       <BulkActionBar

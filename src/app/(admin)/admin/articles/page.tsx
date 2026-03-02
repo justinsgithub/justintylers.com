@@ -33,12 +33,13 @@ export default function AdminArticlesPage() {
 
   return (
     <div className="max-w-5xl space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-foreground">Articles</h1>
+      <div className="flex items-center justify-between gap-2">
+        <h1 className="text-xl font-bold text-foreground md:text-2xl">Articles</h1>
         <Link href="/admin/articles/new">
-          <Button>
+          <Button size="sm" className="md:h-9 md:px-4">
             <PenSquare className="mr-2 h-4 w-4" />
-            New Article
+            <span className="hidden sm:inline">New Article</span>
+            <span className="sm:hidden">New</span>
           </Button>
         </Link>
       </div>
@@ -82,10 +83,10 @@ export default function AdminArticlesPage() {
             <Link
               key={article._id}
               href={`/admin/articles/${article._id}`}
-              className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/30"
+              className="flex flex-col gap-2 rounded-lg border border-border bg-card p-3 transition-colors hover:border-primary/30 sm:flex-row sm:items-center sm:gap-3 sm:p-4"
             >
               <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap">
                   <span className="truncate text-sm font-medium text-foreground">
                     {article.title}
                   </span>
@@ -108,7 +109,7 @@ export default function AdminArticlesPage() {
                   {article.description}
                 </p>
               </div>
-              <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground shrink-0 sm:gap-3">
                 <Badge variant="secondary" className="text-xs">
                   {categoryLabels[article.category] || article.category}
                 </Badge>
