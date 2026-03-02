@@ -7,9 +7,11 @@ import { api } from "../../../../../../convex/_generated/api";
 import { Id } from "../../../../../../convex/_generated/dataModel";
 import type { Value } from "platejs";
 import { createSlateEditor } from "platejs";
+import { serializeHtml } from "platejs/static";
 import { MarkdownPlugin } from "@platejs/markdown";
 import { BaseEditorKit } from "@/components/editor/editor-base-kit";
 import { ArticleEditor } from "@/components/admin/articles/article-editor";
+import { EditorStatic } from "@/components/ui/editor-static";
 import { CoverImageUpload } from "@/components/admin/articles/cover-image-upload";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -84,6 +86,7 @@ export default function EditArticlePage() {
   const [image, setImage] = useState<string | undefined>();
   const [editorValue, setEditorValue] = useState<Value | undefined>();
   const [loaded, setLoaded] = useState(false);
+  const hadContentOnLoad = useRef(false);
   const [changeKey, setChangeKey] = useState(0);
 
   useEffect(() => {
@@ -112,6 +115,7 @@ export default function EditArticlePage() {
           // Markdown deserialization failed, ignore
         }
       }
+      hadContentOnLoad.current = !!(article.content || article.contentMarkdown);
       setLoaded(true);
     }
   }, [article, loaded]);
@@ -155,6 +159,12 @@ export default function EditArticlePage() {
       } catch {
         contentMarkdown = undefined;
       }
+    }
+
+    // Guard: don't save empty content if article previously had content
+    if (hadContentOnLoad.current && (!contentMarkdown || contentMarkdown.trim().length < 10)) {
+      toast.warning("Content appears empty — auto-save skipped. Undo your changes or reload to recover.");
+      return;
     }
 
     await updateArticle({
@@ -223,25 +233,44 @@ export default function EditArticlePage() {
     }
   };
 
-  const handleCopyForLinkedIn = () => {
-    let markdown = "";
-    if (editorValue) {
-      try {
-        const tempEditor = createSlateEditor({
-          plugins: BaseEditorKit,
-          value: editorValue,
-        });
-        markdown = tempEditor.api.markdown.serialize();
-      } catch {
-        toast.error("Failed to serialize content");
-        return;
-      }
+  const handleCopyForLinkedIn = async () => {
+    if (!editorValue) return;
+
+    let html = "";
+    let plainText = "";
+    try {
+      const tempEditor = createSlateEditor({
+        plugins: BaseEditorKit,
+        value: editorValue,
+      });
+      html = await serializeHtml(tempEditor, {
+        editorComponent: EditorStatic,
+        props: { style: {} },
+      });
+      plainText = tempEditor.api.markdown.serialize()
+        .replace(/^#{1,6}\s+/gm, "")
+        .replace(/\*\*(.+?)\*\*/g, "$1")
+        .replace(/\*(.+?)\*/g, "$1")
+        .replace(/\[(.+?)\]\((.+?)\)/g, "$1");
+    } catch {
+      toast.error("Failed to serialize content");
+      return;
     }
-    const text = `${title}\n\n${markdown}\n\nWebsite https://justintylers.com`;
-    navigator.clipboard.writeText(text).then(
-      () => toast.success("Copied to clipboard"),
-      () => toast.error("Failed to copy"),
-    );
+
+    const suffix = `<p><br></p><p>Website <a href="https://justintylers.com">https://justintylers.com</a></p>`;
+    const fullHtml = `<h1>${title}</h1>${html}${suffix}`;
+    const fullPlain = `${title}\n\n${plainText.trim()}\n\nWebsite https://justintylers.com`;
+    try {
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          "text/html": new Blob([fullHtml], { type: "text/html" }),
+          "text/plain": new Blob([fullPlain], { type: "text/plain" }),
+        }),
+      ]);
+      toast.success("Copied to clipboard");
+    } catch {
+      toast.error("Failed to copy");
+    }
   };
 
   return (
