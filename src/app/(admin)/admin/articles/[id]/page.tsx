@@ -35,7 +35,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
-import { ArrowLeft, Trash2, ExternalLink, Loader2, Check } from "lucide-react";
+import { ArrowLeft, Trash2, ExternalLink, Loader2, Check, Copy } from "lucide-react";
 import Link from "next/link";
 import { useAutoSave, type SaveStatus } from "@/lib/hooks/use-auto-save";
 import { useUnsavedChanges } from "@/lib/hooks/use-unsaved-changes";
@@ -223,6 +223,27 @@ export default function EditArticlePage() {
     }
   };
 
+  const handleCopyForLinkedIn = () => {
+    let markdown = "";
+    if (editorValue) {
+      try {
+        const tempEditor = createSlateEditor({
+          plugins: BaseEditorKit,
+          value: editorValue,
+        });
+        markdown = tempEditor.api.markdown.serialize();
+      } catch {
+        toast.error("Failed to serialize content");
+        return;
+      }
+    }
+    const text = `${title}\n\n${markdown}\n\nWebsite https://justintylers.com`;
+    navigator.clipboard.writeText(text).then(
+      () => toast.success("Copied to clipboard"),
+      () => toast.error("Failed to copy"),
+    );
+  };
+
   return (
     <div className="max-w-6xl space-y-6">
       <div className="flex items-center gap-3">
@@ -251,6 +272,10 @@ export default function EditArticlePage() {
               <ExternalLink className="h-4 w-4" />
             </Link>
           )}
+          <Button onClick={handleCopyForLinkedIn} variant="outline" size="sm">
+            <Copy className="mr-1.5 h-3.5 w-3.5" />
+            Copy
+          </Button>
           <Button onClick={handleSave} disabled={status === "saving"} size="sm">
             {status === "saving" ? "Saving..." : "Save"}
           </Button>
