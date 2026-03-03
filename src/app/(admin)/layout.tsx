@@ -46,7 +46,7 @@ export default function AdminLayout({
           </div>
         </div>
       )}
-      <div className="flex min-h-screen flex-col md:flex-row">
+      <div className="ph-no-capture flex min-h-screen flex-col md:flex-row">
         <AdminSidebar />
         <MobileAdminHeader />
         <main className="flex-1 p-4 md:ml-56 md:p-6">{children}</main>
