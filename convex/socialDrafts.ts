@@ -575,6 +575,23 @@ export const updateDraftFromTyler = internalMutation({
   },
 });
 
+export const deleteDraftsFromTyler = internalMutation({
+  args: {
+    ids: v.array(v.id("socialDrafts")),
+  },
+  handler: async (ctx, args) => {
+    let deleted = 0;
+    for (const id of args.ids) {
+      const draft = await ctx.db.get(id);
+      if (draft) {
+        await ctx.db.delete(id);
+        deleted++;
+      }
+    }
+    return deleted;
+  },
+});
+
 export const getPendingReview = internalQuery({
   args: { userId: v.id("users") },
   handler: async (ctx, args) => {

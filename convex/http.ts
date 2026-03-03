@@ -6,7 +6,7 @@ import { Id } from "./_generated/dataModel";
 const corsHeaders = {
   "Content-Type": "application/json",
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Methods": "GET, POST, PATCH, OPTIONS",
+  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
   "Access-Control-Allow-Headers": "Content-Type, X-Tyler-Key",
 };
 
@@ -230,6 +230,39 @@ http.route({
   }),
 });
 
+http.route({
+  path: "/tyler/social-drafts",
+  method: "DELETE",
+  handler: httpAction(async (ctx, request) => {
+    const validation = await validateTylerApiKey(request);
+    if (!validation.valid) {
+      return new Response(JSON.stringify({ error: validation.error }), {
+        status: 401,
+        headers: corsHeaders,
+      });
+    }
+
+    const body = await request.json();
+    const ids = body.ids;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "ids array required" }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    const deleted = await ctx.runMutation(
+      internal.socialDrafts.deleteDraftsFromTyler,
+      { ids: ids as Id<"socialDrafts">[] }
+    );
+
+    return new Response(JSON.stringify({ success: true, deleted }), {
+      status: 200,
+      headers: corsHeaders,
+    });
+  }),
+});
+
 // ============================================================
 // TYLER - ARTICLES CRUD
 // ============================================================
@@ -361,6 +394,39 @@ http.route({
     }
 
     return new Response(JSON.stringify({ success: true, updated }), {
+      status: 200,
+      headers: corsHeaders,
+    });
+  }),
+});
+
+http.route({
+  path: "/tyler/articles",
+  method: "DELETE",
+  handler: httpAction(async (ctx, request) => {
+    const validation = await validateTylerApiKey(request);
+    if (!validation.valid) {
+      return new Response(JSON.stringify({ error: validation.error }), {
+        status: 401,
+        headers: corsHeaders,
+      });
+    }
+
+    const body = await request.json();
+    const ids = body.ids;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "ids array required" }),
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    const deleted = await ctx.runMutation(
+      internal.articles.deleteArticlesFromTyler,
+      { ids: ids as Id<"articles">[] }
+    );
+
+    return new Response(JSON.stringify({ success: true, deleted }), {
       status: 200,
       headers: corsHeaders,
     });

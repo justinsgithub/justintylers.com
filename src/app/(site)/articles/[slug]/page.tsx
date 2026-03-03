@@ -8,6 +8,7 @@ import { fetchQuery } from "convex/nextjs";
 import { api } from "../../../../../convex/_generated/api";
 import Image from "next/image";
 import { mdxComponents } from "@/components/articles/mdx-components";
+import { ShareButtons } from "@/components/articles/share-buttons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
@@ -118,6 +119,13 @@ export default async function ArticlePage({
           />
         </div>
       </article>
+
+      <div className="mt-10">
+        <ShareButtons
+          url={`https://justintylers.com/articles/${slug}`}
+          title={article.title}
+        />
+      </div>
 
       {/* Subscribe CTA */}
       <div className="mt-16 rounded-xl border border-primary/20 bg-primary/5 p-8 text-center">

@@ -209,6 +209,23 @@ export const updateFromTyler = internalMutation({
 });
 
 // Internal mutation for Tyler API and migration
+export const deleteArticlesFromTyler = internalMutation({
+  args: {
+    ids: v.array(v.id("articles")),
+  },
+  handler: async (ctx, args) => {
+    let deleted = 0;
+    for (const id of args.ids) {
+      const article = await ctx.db.get(id);
+      if (article) {
+        await ctx.db.delete(id);
+        deleted++;
+      }
+    }
+    return deleted;
+  },
+});
+
 export const syncArticle = internalMutation({
   args: {
     slug: v.string(),
