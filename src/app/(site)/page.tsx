@@ -66,7 +66,7 @@ export default async function HomePage() {
             Justin Angeles.
           </h1>
           <p className="mt-6 text-lg leading-8 text-muted-foreground">
-             I&apos;m passionate about health &amp; wellness. I love people, about as extroverted as you can get. I spend most my time helping people improve their health and wellness with spa services. I also enjoy helping companies automate and improve their business processes using AI and building custom software.
+             Passionate about health &amp; wellness. About as extroverted as you can get. I help people improve their health and wellness with spa services. I also help companies automate and improve their business processes using AI and building custom software.
           </p>
           <SocialLinks className="mt-6" />
           <div className="mt-8 flex gap-4">
