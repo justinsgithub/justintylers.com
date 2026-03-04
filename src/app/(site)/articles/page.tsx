@@ -3,6 +3,8 @@ import { fetchQuery } from "convex/nextjs";
 import { api } from "../../../../convex/_generated/api";
 import { ArticlesList } from "@/components/articles/articles-list";
 
+export const revalidate = 60;
+
 export const metadata: Metadata = {
   title: "Articles",
   description:

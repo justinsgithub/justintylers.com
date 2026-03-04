@@ -7,6 +7,8 @@ import { SocialLinks } from "@/components/social-links";
 import { fetchQuery } from "convex/nextjs";
 import { api } from "../../../convex/_generated/api";
 
+export const revalidate = 60;
+
 const projects = [
   {
     icon: Bot,
@@ -32,15 +34,29 @@ const projects = [
 ];
 
 export default async function HomePage() {
-  const articles = await fetchQuery(api.articles.list, {});
-  const latestArticles = articles.slice(0, 3).map((a) => ({
-    slug: a.slug,
-    title: a.title,
-    description: a.description,
-    category: a.category,
-    readingTime: a.readingTime || "",
-    publishedAt: a.publishedAt,
-  }));
+  let latestArticles: Array<{
+    slug: string;
+    title: string;
+    description: string;
+    category: string;
+    readingTime: string;
+    publishedAt: string;
+  }> = [];
+
+  try {
+    const articles = await fetchQuery(api.articles.list, {});
+    latestArticles = articles.slice(0, 3).map((a) => ({
+      slug: a.slug,
+      title: a.title,
+      description: a.description,
+      category: a.category,
+      readingTime: a.readingTime || "",
+      publishedAt: a.publishedAt,
+    }));
+  } catch {
+    // Convex unavailable — homepage renders without articles
+  }
+
   return (
     <div className="mx-auto max-w-5xl px-6">
       {/* Hero */}
@@ -92,25 +108,27 @@ export default async function HomePage() {
       </section>
 
       {/* Latest Articles */}
-      <section className="pb-24">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold tracking-tight">
-            Latest Articles
-          </h2>
-          <Link
-            href="/articles"
-            className="text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            View all
-            <ArrowRight className="ml-1 inline h-3 w-3" />
-          </Link>
-        </div>
-        <div className="mt-8 grid gap-4">
-          {latestArticles.map((article) => (
+      {latestArticles.length > 0 && (
+        <section className="pb-24">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold tracking-tight">
+              Latest Articles
+            </h2>
+            <Link
+              href="/articles"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              View all
+              <ArrowRight className="ml-1 inline h-3 w-3" />
+            </Link>
+          </div>
+          <div className="mt-8 grid gap-4">
+            {latestArticles.map((article) => (
               <ArticleCard key={article.slug} article={article} />
             ))}
-        </div>
-      </section>
+          </div>
+        </section>
+      )}
 
       {/* Subscribe */}
       <section className="pb-24">

@@ -12,7 +12,7 @@ import { ShareButtons } from "@/components/articles/share-buttons";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 120;
 
 const categoryLabels: Record<string, string> = {
   tech: "Tech & AI",
