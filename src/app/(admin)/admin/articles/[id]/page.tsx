@@ -84,6 +84,7 @@ export default function EditArticlePage() {
   const [tags, setTags] = useState("");
   const [featured, setFeatured] = useState(false);
   const [image, setImage] = useState<string | undefined>();
+  const [coverImagePrompt, setCoverImagePrompt] = useState("");
   const [editorValue, setEditorValue] = useState<Value | undefined>();
   const [loaded, setLoaded] = useState(false);
   const hadContentOnLoad = useRef(false);
@@ -98,6 +99,7 @@ export default function EditArticlePage() {
       setTags(article.tags.join(", "));
       setFeatured(article.featured);
       setImage(article.image || undefined);
+      setCoverImagePrompt(article.coverImagePrompt ?? "");
       if (article.content) {
         try {
           setEditorValue(JSON.parse(article.content));
@@ -137,13 +139,14 @@ export default function EditArticlePage() {
   const handleTagsChange = useCallback((v: string) => { setTags(v); markDirty(); }, [markDirty]);
   const handleFeaturedChange = useCallback((v: boolean) => { setFeatured(v); markDirty(); }, [markDirty]);
   const handleImageChange = useCallback((v: string | undefined) => { setImage(v); markDirty(); }, [markDirty]);
+  const handleCoverImagePromptChange = useCallback((v: string) => { setCoverImagePrompt(v); markDirty(); }, [markDirty]);
 
   // Refs for auto-save to read latest values without re-creating the callback
-  const formRef = useRef({ title, slug, description, category, tags, featured, image, editorValue });
-  formRef.current = { title, slug, description, category, tags, featured, image, editorValue };
+  const formRef = useRef({ title, slug, description, category, tags, featured, image, coverImagePrompt, editorValue });
+  formRef.current = { title, slug, description, category, tags, featured, image, coverImagePrompt, editorValue };
 
   const doSave = useCallback(async () => {
-    const { title, slug, description, category, tags, featured, image, editorValue } = formRef.current;
+    const { title, slug, description, category, tags, featured, image, coverImagePrompt, editorValue } = formRef.current;
     if (!title.trim()) return;
 
     const contentJson = editorValue ? JSON.stringify(editorValue) : undefined;
@@ -179,6 +182,7 @@ export default function EditArticlePage() {
         .filter(Boolean),
       featured,
       image: image || "",
+      coverImagePrompt: coverImagePrompt || undefined,
       content: contentJson,
       contentMarkdown,
     });
@@ -386,6 +390,18 @@ export default function EditArticlePage() {
           </div>
 
           <CoverImageUpload image={image} onChange={handleImageChange} />
+
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-foreground">
+              Cover Image Prompt
+            </label>
+            <Textarea
+              value={coverImagePrompt}
+              onChange={(e) => handleCoverImagePromptChange(e.target.value)}
+              placeholder="Describe the cover image to generate"
+              className="min-h-[60px]"
+            />
+          </div>
 
           <div>
             <label className="mb-1.5 block text-sm font-medium text-foreground">

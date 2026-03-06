@@ -91,6 +91,7 @@ export const update = mutation({
     content: v.optional(v.string()),
     contentMarkdown: v.optional(v.string()),
     contentHtml: v.optional(v.string()),
+    coverImagePrompt: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;
@@ -197,6 +198,7 @@ export const updateFromTyler = internalMutation({
     contentHtml: v.optional(v.string()),
     image: v.optional(v.string()),
     readingTime: v.optional(v.string()),
+    coverImagePrompt: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...fields } = args;

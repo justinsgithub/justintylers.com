@@ -26,6 +26,7 @@ export default defineSchema({
     content: v.optional(v.string()),
     contentMarkdown: v.optional(v.string()),
     contentHtml: v.optional(v.string()),
+    coverImagePrompt: v.optional(v.string()),
     createdAt: v.number(),
     updatedAt: v.number(),
   })
