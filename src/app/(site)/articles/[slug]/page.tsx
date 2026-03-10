@@ -45,6 +45,12 @@ export async function generateMetadata({
       authors: ["Justin Angeles"],
       ...(article.image ? { images: [{ url: article.image }] } : {}),
     },
+    twitter: {
+      card: "summary_large_image",
+      title: article.title,
+      description: article.description,
+      ...(article.image ? { images: [article.image] } : {}),
+    },
   };
 }
 
