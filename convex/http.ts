@@ -329,6 +329,7 @@ http.route({
         content?: string;
         contentMarkdown?: string;
         contentHtml?: string;
+        coverImagePrompt?: string;
       }>;
     };
 

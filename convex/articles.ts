@@ -245,6 +245,7 @@ export const syncArticle = internalMutation({
     content: v.optional(v.string()),
     contentMarkdown: v.optional(v.string()),
     contentHtml: v.optional(v.string()),
+    coverImagePrompt: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const existing = await ctx.db
