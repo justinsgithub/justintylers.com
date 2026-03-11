@@ -290,7 +290,9 @@ export default function EditArticlePage() {
           <h1 className="min-w-0 truncate text-lg font-bold text-foreground">
             {article.title}
           </h1>
-          {article.draft ? (
+          {article.status === "review" ? (
+            <Badge className="bg-blue-600/20 text-blue-400">Review</Badge>
+          ) : article.draft ? (
             <Badge variant="secondary">Draft</Badge>
           ) : (
             <Badge className="bg-green-600/20 text-green-400">Published</Badge>

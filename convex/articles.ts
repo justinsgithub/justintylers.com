@@ -137,6 +137,7 @@ export const publish = mutation({
 
     await ctx.db.patch(args.id, {
       draft: false,
+      status: "published",
       publishedAt: article.publishedAt || new Date().toISOString().split("T")[0],
       updatedAt: Date.now(),
     });
@@ -148,8 +149,33 @@ export const unpublish = mutation({
   handler: async (ctx, args) => {
     await ctx.db.patch(args.id, {
       draft: true,
+      status: "draft",
       updatedAt: Date.now(),
     });
+  },
+});
+
+export const bulkSetStatus = mutation({
+  args: {
+    ids: v.array(v.id("articles")),
+    status: v.union(v.literal("draft"), v.literal("review"), v.literal("published")),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    for (const id of args.ids) {
+      const article = await ctx.db.get(id);
+      if (!article) continue;
+      const draft = args.status !== "published";
+      await ctx.db.patch(id, {
+        status: args.status,
+        draft,
+        ...(args.status === "published" && !article.publishedAt
+          ? { publishedAt: new Date().toISOString().split("T")[0] }
+          : {}),
+        updatedAt: now,
+      });
+    }
+    return args.ids.length;
   },
 });
 

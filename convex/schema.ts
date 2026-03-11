@@ -21,6 +21,7 @@ export default defineSchema({
     publishedAt: v.string(),
     featured: v.boolean(),
     draft: v.boolean(),
+    status: v.optional(v.union(v.literal("draft"), v.literal("review"), v.literal("published"))),
     image: v.optional(v.string()),
     readingTime: v.optional(v.string()),
     content: v.optional(v.string()),
